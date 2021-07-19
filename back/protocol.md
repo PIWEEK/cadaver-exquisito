@@ -5,6 +5,7 @@
 A game's payload is such as
 
 {
+    "type": "payload",
     "gameId": 0
     "name": "a game name",
     "canvasWidth": 2048,
@@ -28,7 +29,7 @@ A game's payload is such as
         "isAdmin": false
         },
     ]
-    "canvassequence": {
+    "canvasTurn": {
         0: {
             [
             "playerId:" 0,
@@ -83,17 +84,40 @@ A game's payload is such as
         },
 
     }
-    "activeCanvasSequence": 1,
-    "isLastCanvasSequence": false,
+    "activeCanvasTurn": 1,
+    "isLastCanvasTurn": false,
     "drawings": ["ajointdrawing", "anotherjointdrawing", "yetanotherjointdrawing], 
     "status": "ongoing"
 
 }
 
+**End Turn**
+
+{
+    "type": "endTurn",
+    "gameId": 0,
+}
+
+**Start Turn**
+
+{
+    "type": "startTurn",
+    "gameId": 0,
+}
+
+**End Game**
+
+{
+    "type": "endGame",
+    "gameId": 0,
+}
+
+
 **Error payload**
 
 {
-    "id": null
+    "type": "error",
+    "id": null,
     "error": "error message"
 }
 
@@ -102,7 +126,7 @@ A game's payload is such as
 - A game status can be ["waiting", "ongoing", "finished", "error"]
 - game, players and canvas id are numeric
 - filenames are simple filenames, not relative or absolute path included
-- canvassequence is populated upon change from awaiting to ongoing status
+- canvasTurn is populated upon change from awaiting to ongoing status
 
 ### Messages
 
@@ -115,61 +139,57 @@ Either returns payload or error payload (see above)
 **createGame**
 
 {
-    "name": "a game name"
+    "type": "createGame",
+    "name": "a game name",
     "canvasWidth": 2048
 }
 
 **addPlayer**
 
 {
-    - "name": "a player's name",
-    - "isAdmin": false,
-    - "gameId": 0
+    "type": "addPlayer",
+    "name": "a player's name",
+    "isAdmin": false,
+    "gameId": 0
 }
 
 **startGame**
 
 {
-    - "gameId": 0
+    "type": "startGame",
+    "gameId": 0
 }
 
-**collectCanvasSequence**
+**endTurn**
 
 {
+    "type": "endTurn",
+    "gameId": 0,
+    "playerId": 0,
+    "canvasBitmap": "a bitmap file"
+    "order": 0
+}
 
-    - "gameId": 0,
-    - "canvasSequence"  {
-        - "playerCanvas": [
-            [
-            "playerId:" 0,
-            "canvasId": 0,
-            "canvasBitmap": "a bitmap file"
-            ],
-            [
-            "playerId:" 1,
-            "canvasId": 3,
-            "canvasBitmap": "another bitmap file"
-            ],
-            [
-            "playerId:" 2,
-            "canvasId": 6,
-            "canvasBitmap": "yet another bitmap file"
-            ],
-        ]
-        - "order": 0,
+**sendPlayerCanvas**
 
-    }
-
+{
+    "type": "sendPlayerCanvas",
+    "gameId": 0,
+    "playerId": 0,
+    "canvasBitmap": "a bitmap file"
+    "order": 0
 }
 
 **showDrawings**
 
 {
-    - "gameId": 0
+    "type": "showDrawings",
+    "gameId": 0
 }
 
 **finishGame**
 
 {
-    - "gameId": 0
+    "type": "finishGame",
+    "gameId": 0
 }
