@@ -144,10 +144,10 @@ Either returns payload or error payload (see above)
     "canvasWidth": 2048
 }
 
-**addPlayer**
+**joinGame**
 
 {
-    "type": "addPlayer",
+    "type": "joinGame",
     "name": "a player's name",
     "isAdmin": false,
     "gameId": 0
@@ -159,6 +159,14 @@ Either returns payload or error payload (see above)
     "type": "startGame",
     "gameId": 0
 }
+
+**startTurn**
+
+{
+    "type": "startTurn",
+    "gameId": 0
+}
+
 
 **endTurn**
 
