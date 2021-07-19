@@ -1,0 +1,5 @@
+/front/target/app
+/front/public/js
+/front/.cpcache
+/front/.shadow-cljs
+node_modules

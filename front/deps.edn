@@ -1,0 +1,5 @@
+{
+ :aliases
+ {:outdated {:extra-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+             :main-opts ["-m" "antq.core"]}}
+ }

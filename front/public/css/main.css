@@ -1,0 +1,101 @@
+:root {
+  --color-primary-0: rgba( 16,149,174,1);
+  --color-primary-1: rgba( 98,182,197,1);
+  --color-primary-2: rgba( 64,196,220,1);
+  --color-primary-3: rgba(  9, 87,101,1);
+  --color-primary-4: rgba(  2, 94,111,1);
+  --color-primary-5: rgba( 16,149,174,0.07);
+  --color-primary-6: rgba( 16,149,174,0.2);
+
+  --color-white: rgb(255,255,255);
+  --color-black: rgb(0,0,0);
+  --color-success: rgb(88, 195, 92);
+  --color-complete : rgb(165, 153, 198);
+  --color-warning: rgb(252, 136, 2);
+  --color-danger: rgb(230, 82, 68);
+  --color-info: rgb(89, 185, 226);
+  --color-ocean: rgb(66, 133, 244);
+
+  --color-gray-1:  rgb(245, 245, 245);
+  --color-gray-5:  rgb(232, 233, 234);
+  --color-gray-10: rgb(227, 227, 227);
+  --color-gray-20: rgb(177, 178, 181);
+  --color-gray-30: rgb(123, 125, 133);
+  --color-gray-40: rgb(100, 102, 106);
+  --color-gray-50: rgb(48, 50, 54);
+  --color-gray-60: rgb(31, 31, 31);
+
+  --color-gray-5-05:  rgba(232, 233, 234, 0.5);
+
+  --color-success-dark: rgb(71,158,75);
+  --color-danger-dark: #ba4237;
+  --color-danger-lighter: #fadcda;
+
+  --color-success-lighter: rgba(88, 195, 92, 0.1);
+  --color-danger-lighter: rgba(230, 82, 68, 0.1);
+  --color-inactive: rgb(100, 102, 106);
+  --color-inactive-lighter: rgba(100, 102, 106, 0.1);
+}
+
+body {
+  margin: 0px;
+}
+
+#app {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+main {
+  margin-top: 10px;
+  display: flex;
+  max-width: 900px;
+  width: 100%;
+  flex-direction: column;
+  position: relative;
+}
+
+main .message {
+  border-radius: 2px;
+  position: absolute;
+  justify-content: space-between;
+  display: flex;
+  height: 43px;
+  user-select: none;
+  width: 100%;
+}
+
+main .message.error {
+  background-color: var(--color-danger);
+}
+main .message.info {
+  background-color: var(--color-info);
+}
+main .message.success {
+  background-color: var(--color-success);
+}
+
+main .message .content {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  justify-content: center;
+  padding: 0px;
+  align-items: center;
+}
+
+main .message .close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding-right: 10px;
+}
+
+main .message .content .icon {
+  display: flex;
+  padding-right: 10px;
+}
+
+/* --- SECTION: [...] --- */
