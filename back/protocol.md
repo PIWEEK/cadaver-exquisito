@@ -7,6 +7,7 @@ A game's payload is such as
 {
     "gameId": 0
     "name": "a game name",
+    "canvasWidth": 2048,
     "URL": "https://xxx.xx
     "players": [
         {
@@ -115,6 +116,7 @@ Either returns payload or error payload (see above)
 
 {
     "name": "a game name"
+    "canvasWidth": 2048
 }
 
 **addPlayer**
