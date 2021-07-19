@@ -1,0 +1,17 @@
+{
+  "short_name": "Cadaver",
+  "name": "Cadaver Exquisito!",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "type": "image/png",
+      "sizes": "380x380"
+    }
+  ],
+  "start_url": "/?source=pwa&screen=start",
+  "background_color": "#3367D6",
+  "display": "fullscreen",
+  "scope": "/",
+  "theme_color": "#3367D6",
+  "description": "Cadaver Exquisito"
+}

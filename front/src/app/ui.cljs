@@ -10,24 +10,49 @@
    [app.events]
    [app.store :as st]
    [app.util.data :as d]
+   [app.util.webapi :as wa]
+   [app.ui.context :as ctx]
+   [app.ui.screens.start :refer [start-screen]]
+   [app.ui.screens.room :refer [room-screen]]
+   [app.ui.screens.draw :refer [draw-screen]]
    [cljs.pprint :refer [pprint]]
    [cuerdas.core :as str]
+   [goog.events :as events]
    [expound.alpha :as expound]
    [potok.core :as ptk]
    [rumext.alpha :as mf]))
 
+(defn- use-orientation
+  []
+  (let [orientation (mf/use-state (wa/get-orientation))]
+    (mf/use-effect
+     (fn []
+       (let [key (events/listen js/screen.orientation "change"
+                                (fn [event]
+                                  (reset! orientation (wa/get-orientation))))]
+         (fn []
+           (events/unlistenByKey key)))))
+
+        @orientation))
+
 (mf/defc app
   [props]
   (when-let [nav (mf/deref st/nav-ref)]
-    [:main
-     ;; [:& header {:nav nav}]
-     (case (:section nav)
-       ;; :auth       [:& auth-section]
-       ;; :symbols    [:& symbols-section]
-       ;; :dashboard  [:& dashboard-section]
-       ;; :strategies [:& strategies-section]
-       [:span "not found"])]))
+    (let [orientation (use-orientation)]
+      [:main {:class (wa/classnames
+                      :vertical (= orientation :portrait)
+                      :horizontal (= orientation :landscape))}
+       [:& (mf/provider ctx/orientation) {:value orientation}
+        [:div.layout
+         [:div.left-sidebar
+          [:div.hname "cadaver exquisito"]]
 
+         [:div.screen-container
+          (case (:screen nav)
+            :start [:& start-screen]
+            :room [:& room-screen]
+            :draw [:& draw-screen]
+            [:span "not found"])]]]])))
 
 ;; This is a pure frontend error that can be caused by an active
 ;; assertion (assertion that is preserved on production builds). From

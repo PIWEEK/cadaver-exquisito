@@ -35,6 +35,13 @@
   --color-danger-lighter: rgba(230, 82, 68, 0.1);
   --color-inactive: rgb(100, 102, 106);
   --color-inactive-lighter: rgba(100, 102, 106, 0.1);
+
+  --font-size-main: 14px;
+  --font-size-small: 12px;
+}
+
+main > * {
+  font-family: "Lora";
 }
 
 body {
@@ -47,16 +54,7 @@ body {
   flex-direction: column;
 }
 
-main {
-  margin-top: 10px;
-  display: flex;
-  max-width: 900px;
-  width: 100%;
-  flex-direction: column;
-  position: relative;
-}
-
-main .message {
+main > .message {
   border-radius: 2px;
   position: absolute;
   justify-content: space-between;
@@ -66,17 +64,17 @@ main .message {
   width: 100%;
 }
 
-main .message.error {
+main > .message.error {
   background-color: var(--color-danger);
 }
-main .message.info {
+main > .message.info {
   background-color: var(--color-info);
 }
-main .message.success {
+main > .message.success {
   background-color: var(--color-success);
 }
 
-main .message .content {
+main > .message .content {
   display: flex;
   flex-direction: row;
   width: 100%;
@@ -85,7 +83,7 @@ main .message .content {
   align-items: center;
 }
 
-main .message .close {
+main > .message .close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,9 +91,229 @@ main .message .close {
   padding-right: 10px;
 }
 
-main .message .content .icon {
+main > .message .content .icon {
   display: flex;
   padding-right: 10px;
 }
 
+.button {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  font-size: var(--font-size-main);
+  padding: 8px 24px;
+  border-radius: 30px;
+}
+
+.button.button-main {
+  background-color: #BAA0EC;
+}
+
+.button.button-green {
+  background-color: #8AAE7E;
+}
+
 /* --- SECTION: [...] --- */
+
+.layout {
+  background-color: var(--color-black);
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0px;
+  margin: 0px;
+}
+
+.left-sidebar {
+  color: white;
+  /* outline: 1px solid white; */
+
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 25px;
+  height: 100%;
+}
+
+.left-sidebar .hname {
+  transform: translate(-67px, 80px) rotate(270deg);
+  padding: 0px 10px;
+  width: 140px;
+
+  /* outline: 1px solid red; */
+}
+
+.screen-container {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  margin: 0px;
+}
+
+.start-screen > div:not(:last-child) {
+  margin-bottom: 16px;
+}
+
+.start-screen .logo {
+  display: flex;
+  justify-content: center;
+}
+
+.start-screen .logo > svg {
+  width: 55px;
+  height: 55px;
+}
+
+
+.start-screen .title {
+  font-size: var(--font-size-main);
+}
+
+.start-screen .actions {
+  display: flex;
+  justify-content: center;
+}
+
+.start-screen .form {
+  display: flex;
+  justify-content: center;
+}
+
+.start-screen .form input {
+  padding:6px;
+  border: 1px solid white;
+  background-color: white;
+}
+
+.room-screen {
+  /* width: 100%; */
+  /* height: 100%; */
+}
+
+.room-screen .main-panel {
+  /* outline: 1px solid red; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 400px;
+  font-size: var(--font-size-main);
+}
+
+.room-screen .main-panel .avatar > svg {
+  width: 55px;
+  height: 55px;
+}
+
+.room-screen .main-panel > div:not(:last-child) {
+  margin-bottom: 12px;
+}
+
+.room-screen .main-panel .message {
+  padding: 0px 30px;
+  text-align: center;
+  font-size: var(--font-size-main);
+  margin-bottom: 16px;
+}
+
+.room-screen .share-link {
+  /* border: 1px solid white; */
+  overflow: hidden;
+  width: 120px;
+  height: 120px;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+
+.room-screen .share-link-container {
+  transform: translate(40px, 30px) rotate(-45deg);
+  font-size: var(--font-size-small);
+  align-items: center;
+  /* justify-content: center; */
+  display: flex;
+  flex-direction: column;
+
+}
+
+.room-screen .share-link .circle-button {
+  margin-top: 16px;
+  border: 2px solid white;
+  width: 110px;
+  height: 110px;
+  display: flex;
+  justify-content: center;
+  border-radius: 150px 150px;
+  user-select: none;
+}
+.room-screen .share-link .label {
+  font-size: var(--font-size-small);
+  text-align: center;
+  /* outline: 1px solid red; */
+}
+
+.room-screen .share-link .circle-button > .label {
+  padding-top: 15px;
+}
+
+
+.room-screen .participants {
+  display: flex;
+  /* outline: 1px solid white; */
+  margin-top: 36px;
+  font-size: var(--font-size-small);
+}
+
+.room-screen .participant {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.room-screen .participant:not(:last-child) {
+  margin-right: 10px;
+}
+
+.room-screen .participants svg {
+  width: 25px;
+  height: 25px;
+}
+
+.draw-screen {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+}
+
+.draw-screen .left-panel {
+  width: 25px;
+  min-width: 25px;
+  /* outline: 1px solid white; */
+}
+
+.draw-screen .main-panel {
+  /* outline: 1px solid cyan; */
+  flex-grow: 1;
+}
+
+.draw-screen .right-panel {
+  /* outline: 1px solid green; */
+  min-width: 100px;
+  width: 100px;
+}
+
+.draw-screen .main-panel .draw-panel {
+  background-color: white;
+  width: calc(100% - 30px);
+  height: calc(100% - 30px);
+  margin: 15px;
+}
+
+.draw-screen .main-panel .draw-panel canvas {
+  width: 100%;
+  height: 100%;
+}
+
+

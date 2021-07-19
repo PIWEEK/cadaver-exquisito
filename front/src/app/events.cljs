@@ -27,6 +27,22 @@
 
 (def re-throw #(rx/throw %))
 
+(defmethod ptk/resolve :setup
+  [_ params]
+  (ptk/reify :setup
+    ptk/UpdateEvent
+    (update [_ state]
+      (let [nav (some->> (:query (wa/get-current-uri))
+                         (u/query-string->map)
+                         (us/conform ::nav))]
+        (update state :nav #(or % nav))))
+
+    ptk/WatchEvent
+    (watch [_ state stream]
+      (let [screen (get-in state [:nav :screen])]
+        (when-not screen
+          (rx/of (ptk/event :nav {:screen :start})))))))
+
 (defmethod ptk/resolve :initialize
   [_ params]
   (ptk/reify :initialize
@@ -35,12 +51,10 @@
       )))
 
 
-(s/def :app.events$nav/section ::us/keyword)
-(s/def :app.events$nav/token ::us/string)
+(s/def :app.events$nav/screen ::us/keyword)
 
 (s/def ::nav
-  (s/keys :opt-un [:app.events$nav/section
-                   :app.events$nav/token]))
+  (s/keys :opt-un [:app.events$nav/screen]))
 
 (defmethod ptk/resolve :nav
   [_ params]

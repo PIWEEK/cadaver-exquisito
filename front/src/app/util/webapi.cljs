@@ -69,3 +69,14 @@
   []
   (u/uri (.-href js/location)))
 
+(defn- is-portrait?
+  [window]
+  (let [result (.matchMedia ^js window "(orientation: portrait)")]
+    (.-matches ^js result)))
+
+(defn get-orientation
+  []
+  (if (is-portrait? js/window)
+    :portrait
+    :landscape))
+
