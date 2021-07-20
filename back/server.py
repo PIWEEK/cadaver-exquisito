@@ -197,6 +197,7 @@ def joinGame(message):
 
     response = {}
     room = message['room']
+    tabID = message['tabID']
 
     join_room(room) # socket room
 
@@ -204,19 +205,19 @@ def joinGame(message):
 
     response.update({'count': session['receive_count']})
     response.update({'type': 'joinGame'})
-    response.update({'data': f'{request.sid} joined game: ' + room})
+    response.update({'data': f'{tabID} joined game: ' + room})
     
     with app.app_context():
 
         if room not in app.cadaverGames.keys():
             game = CadaverGame(randint(0,1000),room,2048,'https://')
-            game.joinGame(request.sid, request.sid, True)
+            game.joinGame(tabID, tabID, True)
             app.cadaverGames[room] = game
 
-        if not app.cadaverGames[room].hasPlayer(request.sid):
-            app.cadaverGames[room].joinGame(request.sid, request.sid, False)
+        if not app.cadaverGames[room].hasPlayer(tabID):
+            app.cadaverGames[room].joinGame(tabID, tabID, False)
             if len(app.cadaverGames[room].players) == 1:
-                app.cadaverGames[room].giveAdmin[request.sid] 
+                app.cadaverGames[room].giveAdmin[tabID] 
 
         print(app.cadaverGames[room].toJSON())
 
@@ -251,6 +252,7 @@ def leaveGame(message):
 
     response = {}
     room = message['room']
+    tabID = message['tabID']
     try:
         callbackId = message['callbackId']
     except:
@@ -259,7 +261,7 @@ def leaveGame(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     response.update({'count': session['receive_count']})
     response.update({'type':'leaveGame'})
-    response.update({'data':f'{request.sid} left the room '+room})
+    response.update({'data':f'{tabID} left the room '+room})
     response.update({'gameId': room})
     
     # try:
@@ -274,7 +276,7 @@ def leaveGame(message):
     leave_room(message['room']) # socket room
 
     with app.app_context():
-        app.cadaverGames[room].leaveGame(request.sid)
+        app.cadaverGames[room].leaveGame(tabID)
        
 
 @socketio.on('close_room')
@@ -348,10 +350,14 @@ def my_ping():
 
 @socketio.event
 def connect(message):
+
     global thread
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(background_thread)
+
+    tabID = request.args.get('tabID')
+    print("socketio",tabID)
 
     response = {}
 
@@ -365,7 +371,7 @@ def connect(message):
 
 @socketio.on('disconnect')
 def test_disconnect():
-    print('Client disconnected', request.sid)
+    print('Client disconnected')
 
 
 if __name__ == '__main__':

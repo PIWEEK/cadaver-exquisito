@@ -9,7 +9,10 @@
             // Connect to the Socket.IO server.
             // The connection URL has the following format, relative to the current page:
             //     http[s]://<domain>:<port>[/<namespace>]
-            var socket = io();
+            var tabID = sessionStorage.tabID ? sessionStorage.tabID : sessionStorage.tabID = Math.random();
+            
+            const socket = io({ query: "tabID="+tabID });
+            //var socket = io();
 
             // Event handler for new connections.
             // The callback function is invoked when a connection with the
@@ -80,11 +83,11 @@
                 return false;
             });
             $('form#joinGame').submit(function(event) {
-                socket.emit('joinGame', {room: $('#join_game').val()});
+                socket.emit('joinGame', {"tabID": tabID, room: $('#join_game').val()});
                 return false;
             });
             $('form#leaveGame').submit(function(event) {
-                socket.emit('leaveGame', {room: $('#leave_game').val()});
+                socket.emit('leaveGame', {"tabID": tabID, room: $('#leave_game').val()});
                 return false;
             });
             $('form#startGame').submit(function(event) {
