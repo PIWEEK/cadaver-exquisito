@@ -16,43 +16,31 @@
    [app.ui.screens.room :refer [room-screen]]
    [app.ui.screens.draw :refer [draw-screen]]
    [cljs.pprint :refer [pprint]]
+   [app.ui.rhooks :as rh]
    [cuerdas.core :as str]
    [goog.events :as events]
    [expound.alpha :as expound]
    [potok.core :as ptk]
    [rumext.alpha :as mf]))
 
-(defn- use-orientation
-  []
-  (let [orientation (mf/use-state (wa/get-orientation))]
-    (mf/use-effect
-     (fn []
-       (let [key (events/listen js/screen.orientation "change"
-                                (fn [event]
-                                  (reset! orientation (wa/get-orientation))))]
-         (fn []
-           (events/unlistenByKey key)))))
-
-        @orientation))
-
 (mf/defc app
   [props]
   (when-let [nav (mf/deref st/nav-ref)]
-    (let [orientation (use-orientation)]
-      [:main {:class (wa/classnames
-                      :vertical (= orientation :portrait)
-                      :horizontal (= orientation :landscape))}
-       [:& (mf/provider ctx/orientation) {:value orientation}
-        [:div.layout
-         [:div.left-sidebar
-          [:div.hname "cadaver exquisito"]]
+    (let [orientation (rh/use-orientation)]
+      [:main
+       [:div.layout
+        (if (= :portrait orientation)
+          [:div.notice "Put the device in landscape orientation."]
+          [:*
+           [:div.left-sidebar
+            [:div.hname "cadaver exquisito"]]
 
-         [:div.screen-container
-          (case (:screen nav)
-            :start [:& start-screen]
-            :room [:& room-screen]
-            :draw [:& draw-screen]
-            [:span "not found"])]]]])))
+           [:div.screen-container
+            (case (:screen nav)
+              :start [:& start-screen]
+              :room [:& room-screen]
+              :draw [:& draw-screen]
+              [:span "not found"])]])]])))
 
 ;; This is a pure frontend error that can be caused by an active
 ;; assertion (assertion that is preserved on production builds). From

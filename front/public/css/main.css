@@ -46,6 +46,8 @@ main > * {
 
 body {
   margin: 0px;
+  overscroll-behavior: contain;
+
 }
 
 #app {
@@ -125,6 +127,10 @@ main > .message .content .icon {
   align-items: center;
   padding: 0px;
   margin: 0px;
+}
+
+.layout .notice {
+  color: white;
 }
 
 .left-sidebar {
@@ -282,20 +288,18 @@ main > .message .content .icon {
 }
 
 .draw-screen {
+  outline: 1px solid white;
   display: flex;
+  max-width: 1200px;
+  max-height: 720px;
   width: 100vw;
   height: 100vh;
 }
 
 .draw-screen .left-panel {
-  width: 25px;
-  min-width: 25px;
+  width: 30px;
+  min-width: 30px;
   /* outline: 1px solid white; */
-}
-
-.draw-screen .main-panel {
-  /* outline: 1px solid cyan; */
-  flex-grow: 1;
 }
 
 .draw-screen .right-panel {
@@ -304,11 +308,39 @@ main > .message .content .icon {
   width: 100px;
 }
 
-.draw-screen .main-panel .draw-panel {
+.draw-screen .main-panel {
+  /* outline: 1px solid cyan; */
   background-color: white;
   width: calc(100% - 30px);
+  width: 100%;
   height: calc(100% - 30px);
-  margin: 15px;
+  margin: 15px 0px;
+}
+
+.draw-screen .main-panel .draw-panel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.draw-screen .main-panel .draw-panel .top-overlay {
+  background-color: rgba(100,10,10,0.1);
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+  pointer-events: none;
+}
+
+.draw-screen .main-panel .draw-panel .bottom-overlay {
+  background-color: rgba(30,100,30,0.1);
+  width: 100%;
+  height: 100%;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  pointer-events: none;
 }
 
 .draw-screen .main-panel .draw-panel canvas {

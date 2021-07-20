@@ -79,4 +79,3 @@
   (if (is-portrait? js/window)
     :portrait
     :landscape))
-
