@@ -13,8 +13,7 @@
 
 (mf/defc start-screen
   [props]
-  [:div.start-screen
-   [:div.logo [:& i/avatar]]
+  [:*
    [:div.title "Welcome to cadaver exquisito!"]
    [:div.form
     [:input {:type "text"
@@ -22,6 +21,5 @@
              :default-value ""}]]
 
    [:div.actions
-    [:div.button.button-main {:on-click #(st/emit! (ptk/event :nav {:screen :room}))}
+    [:div.button.button-main {:on-click #(st/nav! {:screen :room})}
      "Create a new game"]]])
-

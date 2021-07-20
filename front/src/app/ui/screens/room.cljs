@@ -13,12 +13,12 @@
 
 (mf/defc room-screen
   [props]
-  [:div.room-screen
-   [:div.main-panel
+  [:*
+   [:div.profile
     [:div.avatar [:& i/avatar]]
     [:div.greetings "Hi Esther!"]
     [:div.message "Since you're the main blob, you get to start the game when everyone arrives."]
-    [:div.button.button-green {:on-click #(st/emit! (ptk/event :nav {:screen :draw}))} "Start game"]]
+    [:div.button.button-green {:on-click #(st/nav! {:screen :draw})} "Start game"]]
 
    [:div.participants
     (for [i (range 4)]
