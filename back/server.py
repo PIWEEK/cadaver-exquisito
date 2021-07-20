@@ -1,6 +1,6 @@
 import json, uuid
 from datauri import DataURI
-from random import randint, choice
+from random import randint, choice, shuffle
 from threading import Lock
 from flask import Flask, render_template, session, request, \
     copy_current_request_context
@@ -20,8 +20,27 @@ def generateDrawings(numPlayers):
 
     return drawings    
 
+def generateAvatars(multiples=5):
+    shape = [1,2,3,4,5,6,7,8,9]
+    color = ["a","b","c","d","e","f","g","h","i","j","k"]
 
-    
+
+    if multiples < 1:
+        multiples = 1
+    shapes = []
+    colors = []
+    for i in range(multiples):
+        shuffle(shape)
+        shapes+=shape[:]
+        shuffle(color)
+        colors+=color[:]
+
+    avatars = list(zip(shapes, colors))
+    print(avatars)
+    return avatars
+
+
+
 
 class CadaverGame:
 
@@ -37,12 +56,15 @@ class CadaverGame:
         self.activeCanvasTurn = 0
         self.isLastCanvasTurn = False
         self.drawings = []
+        self.avatars = generateAvatars()
+        self.avatarindex = 0
         self.status = "waiting"
 
-    def joinGame(self, playerId, name, avatar, isAdmin):
+    def joinGame(self, playerId, name, isAdmin):
 
-        p = {"playerId": playerId, "name": name, "avatar": avatar, "isAdmin": isAdmin}
+        p = {"playerId": playerId, "name": name, "avatar": self.avatars[self.avatarindex], "isAdmin": isAdmin}
         self.players.append(p)
+        self.avatarindex += 1
 
     def hasPlayer(self, playerId):
 
@@ -91,6 +113,8 @@ class CadaverGame:
         self.canvasTurns = turnsdict
         self.status = "ongoing"
         
+    def buildAvatars(self):
+        self.avatars = generateAvatars()
 
     def giveAdmin(self, playerId):
 
@@ -186,11 +210,11 @@ def joinGame(message):
 
         if room not in app.cadaverGames.keys():
             game = CadaverGame(randint(0,1000),room,2048,'https://')
-            game.joinGame(request.sid, request.sid, "avatar", True)
+            game.joinGame(request.sid, request.sid, True)
             app.cadaverGames[room] = game
 
         if not app.cadaverGames[room].hasPlayer(request.sid):
-            app.cadaverGames[room].joinGame(request.sid, request.sid, "avatar", False)
+            app.cadaverGames[room].joinGame(request.sid, request.sid, False)
             if len(app.cadaverGames[room].players) == 1:
                 app.cadaverGames[room].giveAdmin[request.sid] 
 
