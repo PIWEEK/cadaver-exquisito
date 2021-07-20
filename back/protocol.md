@@ -29,7 +29,7 @@ A game's payload is such as
         "isAdmin": false
         },
     ]
-    "canvasTurn": {
+    "canvasTurns": {
         0: {
             [
             "playerId:" 0,

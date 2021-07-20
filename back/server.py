@@ -1,4 +1,5 @@
-import json
+import json, uuid
+from datauri import DataURI
 from random import randint, choice
 from threading import Lock
 from flask import Flask, render_template, session, request, \
@@ -8,6 +9,20 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, \
 
 
 cadaverGames = {}        
+
+def generateDrawings(numPlayers):
+    drawings = []
+    for n in range(numPlayers):
+        secondtier = []
+        for i in range(numPlayers):
+            secondtier.append(str(uuid.uuid4()))
+        drawings.append(secondtier)
+
+    print(drawings)
+    return drawings    
+
+
+    
 
 class CadaverGame:
 
@@ -46,12 +61,40 @@ class CadaverGame:
                 newAdmin = choice(self.players)
                 self.giveAdmin(newAdmin['playerId'])
 
+    def startGame(self):
+        turnsdict = {}
+        self.drawings = generateDrawings(len(self.players))
+        print("drawings",self.drawings)
+        count = 0
+        for p in self.players:
+            pdict = {}
+            turn = 0
+            for i in self.players:
+                if turn == 0:
+                    pdict.update({turn: [self.drawings[count][turn],None]})
+                else:
+                    pdict.update({turn: [self.drawings[count][turn],self.drawings[count][turn-1]]})
+                turn +=1 
+            print("pdict",pdict)
+            count += 1
+
+            turnsdict.update({p["playerId"]: pdict})
+        
+             
+
+        self.canvasTurns = turnsdict
+        print(self.canvasTurns)
+
+        self.status = "ongoing"
+        
+
     def giveAdmin(self, playerId):
         for p in self.players:
             if p['playerId'] == playerId:
                 pToAdmin = p
         if p:
             p['isAdmin'] = True
+
 
     def _repr_(self):
         return json.dumps(dir(self))
@@ -68,7 +111,7 @@ async_mode = None
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode=async_mode)
+socketio = SocketIO(app, async_mode=async_mode, manage_session=True)
 thread = None
 thread_lock = Lock()
 app.cadaverGames = cadaverGames
@@ -111,9 +154,6 @@ def joinGame(message):
 
     join_room(room)
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': 'In rooms: ' + ', '.join(rooms()),
-        'count': session['receive_count']})
 
 
     with app.app_context():
@@ -128,8 +168,36 @@ def joinGame(message):
             if len(app.cadaverGames[room].players) == 1:
                 app.cadaverGames[room].giveAdmin[request.sid] 
 
-
         print(app.cadaverGames,app.cadaverGames[room].toJSON())
+
+    emit('my_response',
+         {'data': f'{request.sid} joined game: ' + room,
+        'count': session['receive_count']},to=room)
+
+
+
+@socketio.event
+def startGame(message):
+
+    room = message['room']
+    response = {}
+
+    with app.app_context():
+
+        #TODO check for existing room, raise error otherwise
+
+        game = app.cadaverGames[room]
+        game.startGame()
+
+        response.update({'type':'startGame'})
+        response.update({'gameId': room})
+       
+    
+    response.update({'count': session['receive_count']})
+
+    emit('response_startGame',
+         response, to=room)
+
 
 
 
@@ -137,12 +205,13 @@ def joinGame(message):
 def leave(message):
 
     room = message['room']
+    callbackId = message['room']
 
     leave_room(message['room'])
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
          {'data': 'In rooms: ' + ', '.join(rooms()),
-          'count': session['receive_count']})
+          'count': session['receive_count'], 'callbackId': callbackId})
 
     with app.app_context():
         try:
@@ -189,13 +258,18 @@ def disconnect_request():
 def payload_request(message):
 
     room = message['room']
-    print("room for payload is", room)
+    response = {}
+    callbackId = message['room']
 
     with app.app_context():
-        print(app.cadaverGames)
-        payload = app.cadaverGames[room].toJSON()
-    emit('my_response',
-         {'data': payload, 'count': session['receive_count']})
+
+        response.update({'type':'payload'})
+        response.update({'gameId': room})
+        response.update({'count': session['receive_count']})
+        response.update({'data': app.cadaverGames[room].toJSON()})
+        response.update({'callbackId': callbackId})
+
+    emit('payload', response)
 
 
 @socketio.event
@@ -204,11 +278,15 @@ def my_ping():
 
 
 @socketio.event
-def connect():
+def connect(message):
     global thread
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(background_thread)
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    print("session",session)
+    print("nueva conexión")
+    print(message)
     emit('my_response', {'data': 'Connected', 'count': 0})
 
 
