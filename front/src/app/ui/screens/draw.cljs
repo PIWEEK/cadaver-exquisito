@@ -138,14 +138,16 @@
      (fn []
        (when-let [node (deref canvas)]
          (initialize! node))))
+
     [:*
      [:div.header]
      [:div.main-content
-      [:div.left-sidebar]
+      [:div.left-sidebar
+       ]
       [:div.main-panel
-       #_[:div.draw-panel
-          [:canvas {:ref on-canvas}]
-          [:div.top-overlay {:style {:height "50px"}}]
-          [:div.bottom-overlay {:style {:height "50px"}}]]]
+       [:div.draw-panel
+        [:canvas {:ref on-canvas}]
+        [:div.top-overlay {:style {:height "50px"}}]
+        [:div.bottom-overlay {:style {:height "50px"}}]]]
       [:div.right-sidebar]]
      [:div.footer]]))

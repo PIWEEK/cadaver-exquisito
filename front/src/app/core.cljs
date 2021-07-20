@@ -9,7 +9,6 @@
    [lambdaisland.uri :as u]
    [lambdaisland.glogi :as log]
    [lambdaisland.glogi.console :as glogi-console]
-   [potok.core :as ptk]
    [promesa.core :as p]
    [rumext.alpha :as mf]
    [app.store :as st]
@@ -22,8 +21,6 @@
 (defn start
   [& args]
   (log/info :msg "initializing")
-  (st/init)
-  (st/emit! (ptk/event :setup))
   (mf/mount (mf/element ui/app)
             (wa/get-element "app")))
 
@@ -32,14 +29,12 @@
   ;; an empty line for visual feedback of restart
   (js/console.log "")
   (log/info :msg "stoping")
-  (st/emit! (ptk/event :stop))
   (done))
 
 (defn restart
   []
   (mf/unmount (wa/get-element "app"))
   (mf/unmount (wa/get-element "modal"))
-  (st/emit! (ptk/event :stop))
   (start))
 
 (defn ^:dev/after-load after-load

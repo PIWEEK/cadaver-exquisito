@@ -2,4 +2,5 @@
 /front/public/js
 /front/.cpcache
 /front/.shadow-cljs
+/back/venv
 node_modules

@@ -7,33 +7,21 @@
 (ns app.store
   (:require
    [app.util.data :as d]
+   [app.util.spec :as us]
    [app.util.storage :refer [storage]]
    [app.util.timers :as tm]
+   [app.util.webapi :as wa]
    [beicon.core :as rx]
+   [cljs.spec.alpha :as s]
    [cuerdas.core :as str]
    [lambdaisland.glogi :as log]
+   [lambdaisland.uri :as u]
    [okulary.core :as l]
    [potok.core :as ptk]))
 
 (log/set-level 'app.store :info)
 
-
-(defonce state  (ptk/store {:resolve ptk/resolve
-                            :state (::state storage)}))
-(defonce stream (ptk/input-stream state))
-
-(defonce debug-subscription
-  (->> stream
-       (rx/filter ptk/event?)
-       (rx/subs #(log/trace :source "stream"
-                            :event (ptk/type %)
-                            :data (when (satisfies? IDeref %)
-                                    (deref %))))))
-
-
-(defmethod ptk/resolve :default
-  [type params]
-  (ptk/data-event type params))
+(defonce state (l/atom {:nav {:screen "start"}}))
 
 (def nav-ref
   (l/derived :nav state))
@@ -41,23 +29,18 @@
 (def message-ref
   (l/derived :message state))
 
-(defn emit!
-  ([] nil)
-  ([event]
-   (ptk/emit! state event)
-   nil)
-  ([event & events]
-   (apply ptk/emit! state (cons event events))
-   nil))
+(add-watch nav-ref ::router
+           (fn [_ _ oval nval]
+             (when (not= oval nval)
+               (let [query (u/map->query-string nval)
+                     uri   (-> (wa/get-current-uri)
+                               (assoc :query query))]
+                 (.pushState ^js js/history #js {} "" (str uri))))))
 
-(defn- on-change
-  [state]
-  (swap! storage assoc ::state (dissoc state :nav)))
 
-(defn init
-  "Initialize the state materialization."
-  ([] (init {}))
-  ([props]
-   (add-watch state ::persistence #(on-change %4))
-   (let [state (::state storage)]
-     (emit! #(d/merge % state props)))))
+;; --- Helper functions
+
+(defn nav!
+  [params]
+  (swap! state assoc :nav params))
+

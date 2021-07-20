@@ -121,7 +121,6 @@ main > .message .content .icon {
   background-color: var(--color-black);
   width: 100vw;
   height: 100vh;
-
   display: flex;
   justify-content: center;
   align-items: center;
@@ -131,16 +130,13 @@ main > .message .content .icon {
 
 .layout .notice {
   color: white;
+  font-size: 3vh;
+  /* display: flex; */
+  /* justify-content: center; */
+  width: 100vw;
+  padding: 20vw;
+  text-align: center;
 }
-
-/* .left-sidebar .hname { */
-/*   transform: translate(-67px, 80px) rotate(270deg); */
-/*   padding: 0px 10px; */
-/*   width: 140px; */
-
-/*   /\* outline: 1px solid red; *\/ */
-/* } */
-
 .screen {
   color: white;
   display: flex;
@@ -149,7 +145,7 @@ main > .message .content .icon {
 }
 
 .screen > .header, .screen > .footer {
-  height: 3.5%;
+  height: 3.5vh;
   width: 100vw;
 }
 
@@ -160,26 +156,24 @@ main > .message .content .icon {
 }
 
 .screen .left-sidebar {
-  width: 3%;
+  width: 3vw;
   /* outline: 1px solid white; */
 }
+/* .screen .left-sidebar .hname { */
+/*   transform: translate(-11vw, 80px) rotate(270deg); */
+/*   padding: 0px 10px; */
+/*   width: 140px; */
+/*   font-size: 2vw; */
+/*   line-height: 100%; */
+/*   /\* outline: 1px solid red; *\/ */
+/* } */
 
 .screen .right-sidebar {
   /* outline: 1px solid green; */
-  width: 12%;
+  width: 12vw;
 }
 
 /* --- START SCREEN --- */
-
-/* .screen-start .logo { */
-/*   display: flex; */
-/*   justify-content: center; */
-/* } */
-
-/* .screen-start .logo > svg { */
-/*   width: 55px; */
-/*   height: 55px; */
-/* } */
 
 .screen-start {
   font-size: var(--font-size-main);
@@ -205,17 +199,13 @@ main > .message .content .icon {
   text-align: center;
 }
 
-
 .screen-start .button {
   font-size: var(--font-size-main);
 }
 
-
 .screen-start > div:not(:last-child) {
   margin-bottom: 5vh;
 }
-
-
 
 /* --- ROOM SCREEN --- */
 

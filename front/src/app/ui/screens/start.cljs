@@ -21,6 +21,5 @@
              :default-value ""}]]
 
    [:div.actions
-    [:div.button.button-main {:on-click #(st/emit! (ptk/event :nav {:screen :room}))}
+    [:div.button.button-main {:on-click #(st/nav! {:screen :room})}
      "Create a new game"]]])
-

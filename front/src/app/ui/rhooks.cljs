@@ -25,4 +25,3 @@
            (events/unlistenByKey key)))))
 
         @orientation))
-
