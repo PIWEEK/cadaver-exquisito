@@ -7,6 +7,8 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, \
     close_room, rooms, disconnect
 
 
+cadaverGames = {}        
+
 class CadaverGame:
 
     def __init__(self, gameId, name, canvasWidth, URL):
@@ -69,6 +71,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode=async_mode)
 thread = None
 thread_lock = Lock()
+app.cadaverGames = cadaverGames
 
 
 def background_thread():
@@ -104,28 +107,37 @@ def my_broadcast_event(message):
 @socketio.event
 def joinGame(message):
 
-    join_room(message['room'])
+    room = message['room']
+
+    join_room(room)
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
          {'data': 'In rooms: ' + ', '.join(rooms()),
         'count': session['receive_count']})
 
-    with app.app_context():
-        try:
-            if not app.game.hasPlayer(request.sid):
-                app.game.joinGame(request.sid, request.sid, "avatar", False)
-                if len(app.game.players) == 1:
-                    app.game.giveAdmin[request.sid] 
-        except:
-            app.game = CadaverGame(randint(0,1000),message['room'],2048,'https://')
-            app.game.joinGame(request.sid, request.sid, "avatar", True)
 
-        print(app.game.toJSON())
+    with app.app_context():
+
+        if room not in app.cadaverGames.keys():
+            game = CadaverGame(randint(0,1000),room,2048,'https://')
+            game.joinGame(request.sid, request.sid, "avatar", True)
+            app.cadaverGames[room] = game
+
+        if not app.cadaverGames[room].hasPlayer(request.sid):
+            app.cadaverGames[room].joinGame(request.sid, request.sid, "avatar", False)
+            if len(app.cadaverGames[room].players) == 1:
+                app.cadaverGames[room].giveAdmin[request.sid] 
+
+
+        print(app.cadaverGames,app.cadaverGames[room].toJSON())
 
 
 
 @socketio.event
 def leave(message):
+
+    room = message['room']
+
     leave_room(message['room'])
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
@@ -135,7 +147,7 @@ def leave(message):
     with app.app_context():
         try:
             print("playerId",request.sid)
-            app.game.leaveGame(request.sid)
+            app.cadaverGames[room].leaveGame(request.sid)
         except:
             pass
 
@@ -174,13 +186,14 @@ def disconnect_request():
          callback=can_disconnect)
 
 @socketio.event
-def payload_request():
+def payload_request(message):
+
+    room = message['room']
+    print("room for payload is", room)
 
     with app.app_context():
-        try:
-            payload = app.game.toJSON()
-        except:
-            pass
+        print(app.cadaverGames)
+        payload = app.cadaverGames[room].toJSON()
     emit('my_response',
          {'data': payload, 'count': session['receive_count']})
 
