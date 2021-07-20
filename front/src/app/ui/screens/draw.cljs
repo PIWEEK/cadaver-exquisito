@@ -110,9 +110,8 @@
 
         on-touch-end
         (fn [event]
-          (prn "on-mouse-enter")
+          (prn "on-mouse-end")
           (vreset! drawing false))
-
 
         keys [(gev/listen node "mousedown" on-mouse-down)
               (gev/listen node "mousemove" on-mouse-move)
@@ -139,12 +138,14 @@
      (fn []
        (when-let [node (deref canvas)]
          (initialize! node))))
-
-    [:div.draw-screen
-     [:div.left-panel ""]
-     [:div.main-panel
-      [:div.draw-panel
-       [:canvas {:ref on-canvas}]
-       [:div.top-overlay {:style {:height "50px"}}]
-       [:div.bottom-overlay {:style {:height "50px"}}]]]
-     [:div.right-panel ""]]))
+    [:*
+     [:div.header]
+     [:div.main-content
+      [:div.left-sidebar]
+      [:div.main-panel
+       #_[:div.draw-panel
+          [:canvas {:ref on-canvas}]
+          [:div.top-overlay {:style {:height "50px"}}]
+          [:div.bottom-overlay {:style {:height "50px"}}]]]
+      [:div.right-sidebar]]
+     [:div.footer]]))

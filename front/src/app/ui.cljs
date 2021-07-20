@@ -32,10 +32,9 @@
         (if (= :portrait orientation)
           [:div.notice "Put the device in landscape orientation."]
           [:*
-           [:div.left-sidebar
-            [:div.hname "cadaver exquisito"]]
-
-           [:div.screen-container
+           ;; [:div.left-sidebar
+           ;;  [:div.hname "cadaver exquisito"]]
+           [:div.screen {:class (str "screen-" (name (:screen nav)))}
             (case (:screen nav)
               :start [:& start-screen]
               :room [:& room-screen]

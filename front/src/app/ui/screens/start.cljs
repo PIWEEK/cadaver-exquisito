@@ -13,8 +13,7 @@
 
 (mf/defc start-screen
   [props]
-  [:div.start-screen
-   [:div.logo [:& i/avatar]]
+  [:*
    [:div.title "Welcome to cadaver exquisito!"]
    [:div.form
     [:input {:type "text"
