@@ -83,8 +83,8 @@
                 socket.emit('joinGame', {room: $('#join_game').val()});
                 return false;
             });
-            $('form#leave').submit(function(event) {
-                socket.emit('leave', {room: $('#leave_game').val()});
+            $('form#leaveGame').submit(function(event) {
+                socket.emit('leaveGame', {room: $('#leave_game').val()});
                 return false;
             });
             $('form#startGame').submit(function(event) {
@@ -133,7 +133,7 @@
         <input type="text" name="join_game" id="join_game" placeholder="Game Name">
         <input type="submit" value="Join Game">
     </form>
-    <form id="leave" method="POST" action='#'>
+    <form id="leaveGame" method="POST" action='#'>
         <input type="text" name="leave_game" id="leave_game" placeholder="Game Name">
         <input type="submit" value="Leave Game">
     </form>

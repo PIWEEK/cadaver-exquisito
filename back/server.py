@@ -136,15 +136,16 @@ def index():
 def my_event(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
-         {'data': message['data'], 'count': session['receive_count']})
+         {'data': message['data'], 'count': session['receive_count'],
+         'type': 'my_event'})
 
 
 @socketio.event
 def my_broadcast_event(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
-         {'data': message['data'], 'count': session['receive_count']},
-         broadcast=True)
+         {'data': message['data'], 'count': session['receive_count'],
+         'type':'my_broadcast_event'}, broadcast=True)
 
 
 @socketio.event
@@ -168,10 +169,10 @@ def joinGame(message):
             if len(app.cadaverGames[room].players) == 1:
                 app.cadaverGames[room].giveAdmin[request.sid] 
 
-        print(app.cadaverGames,app.cadaverGames[room].toJSON())
+        print(app.cadaverGames[room].toJSON())
 
     emit('my_response',
-         {'data': f'{request.sid} joined game: ' + room,
+         {'data': f'{request.sid} joined game: ' + room, 'type': 'joinGame',
         'count': session['receive_count']},to=room)
 
 
@@ -194,6 +195,8 @@ def startGame(message):
        
     
     response.update({'count': session['receive_count']})
+    
+    print(app.cadaverGames[room].toJSON())
 
     emit('response_startGame',
          response, to=room)
@@ -202,15 +205,16 @@ def startGame(message):
 
 
 @socketio.event
-def leave(message):
+def leaveGame(message):
 
     room = message['room']
-    callbackId = message['room']
+    callbackId = message['callbackId']
 
     leave_room(message['room'])
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
          {'data': 'In rooms: ' + ', '.join(rooms()),
+         'type': 'leaveGame',
           'count': session['receive_count'], 'callbackId': callbackId})
 
     with app.app_context():
@@ -220,14 +224,12 @@ def leave(message):
         except:
             pass
 
-#        print(app.game.toJSON())
-
 
 @socketio.on('close_room')
 def on_close_room(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response', {'data': 'Room ' + message['room'] + ' is closing.',
-                         'count': session['receive_count']},
+                         'count': session['receive_count'], 'type': 'close_room'},
          to=message['room'])
     close_room(message['room'])
 
@@ -236,7 +238,7 @@ def on_close_room(message):
 def my_room_event(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
     emit('my_response',
-         {'data': message['data'], 'count': session['receive_count']},
+         {'data': message['data'], 'count': session['receive_count'], 'type': 'my_room_event'},
          to=message['room'])
 
 
@@ -251,7 +253,7 @@ def disconnect_request():
     # when the callback function is invoked we know that the message has been
     # received and it is safe to disconnect
     emit('my_response',
-         {'data': 'Disconnected!', 'count': session['receive_count']},
+         {'data': 'Disconnected!', 'count': session['receive_count'], 'type': 'disconnect_request'},
          callback=can_disconnect)
 
 @socketio.event
@@ -259,7 +261,10 @@ def payload_request(message):
 
     room = message['room']
     response = {}
-    callbackId = message['room']
+    try:
+        callbackId = message['callbackId']
+    except:
+        callbackId = ""
 
     with app.app_context():
 
@@ -274,7 +279,7 @@ def payload_request(message):
 
 @socketio.event
 def my_ping():
-    emit('my_pong')
+    emit('my_pong', {'type':'my_ping'})
 
 
 @socketio.event
@@ -287,7 +292,7 @@ def connect(message):
     print("session",session)
     print("nueva conexión")
     print(message)
-    emit('my_response', {'data': 'Connected', 'count': 0})
+    emit('my_response', {'data': 'Connected', 'count': 0, 'type': 'connect'})
 
 
 @socketio.on('disconnect')
