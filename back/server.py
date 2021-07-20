@@ -359,6 +359,13 @@ def connect(message):
     tabID = request.args.get('tabID')
     print("socketio",tabID)
 
+    with app.app_context():
+        for k, v in app.cadaverGames.items():
+            if v.hasPlayer(tabID):
+                print(f"Welcome back to your {k} room!",tabID)
+                join_room(k)
+
+
     response = {}
 
     response.update({'count':0})
