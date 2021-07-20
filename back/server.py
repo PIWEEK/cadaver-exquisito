@@ -13,12 +13,11 @@ cadaverGames = {}
 def generateDrawings(numPlayers):
     drawings = []
     for n in range(numPlayers):
-        secondtier = []
+        canvaslist = []
         for i in range(numPlayers):
-            secondtier.append(str(uuid.uuid4()))
-        drawings.append(secondtier)
+            canvaslist.append(str(uuid.uuid4()))
+        drawings.append(canvaslist)
 
-    print(drawings)
     return drawings    
 
 
@@ -27,6 +26,7 @@ def generateDrawings(numPlayers):
 class CadaverGame:
 
     def __init__(self, gameId, name, canvasWidth, URL):
+
         self.gameId = gameId
         self.name = name
         self.canvasWidth = canvasWidth
@@ -40,32 +40,41 @@ class CadaverGame:
         self.status = "waiting"
 
     def joinGame(self, playerId, name, avatar, isAdmin):
+
         p = {"playerId": playerId, "name": name, "avatar": avatar, "isAdmin": isAdmin}
         self.players.append(p)
 
     def hasPlayer(self, playerId):
+
         pExists = False
         for p in self.players:
             if p['playerId'] == playerId:
-                pExists = True  
+                pExists = True
+                break
+
         return pExists      
 
     def leaveGame(self, playerId):
+
         pToLeave = None
+
         for p in self.players:
             if p['playerId'] == playerId:
                 pToLeave = p
+
         if pToLeave:
             self.players.remove(pToLeave)
             if pToLeave['isAdmin']:
                 newAdmin = choice(self.players)
                 self.giveAdmin(newAdmin['playerId'])
 
+
     def startGame(self):
+
         turnsdict = {}
         self.drawings = generateDrawings(len(self.players))
-        print("drawings",self.drawings)
         count = 0
+
         for p in self.players:
             pdict = {}
             turn = 0
@@ -75,25 +84,25 @@ class CadaverGame:
                 else:
                     pdict.update({turn: [self.drawings[count][turn],self.drawings[count][turn-1]]})
                 turn +=1 
-            print("pdict",pdict)
             count += 1
 
             turnsdict.update({p["playerId"]: pdict})
         
-             
-
         self.canvasTurns = turnsdict
-        print(self.canvasTurns)
-
         self.status = "ongoing"
         
 
     def giveAdmin(self, playerId):
+
+        pToAdmin = None
+
         for p in self.players:
             if p['playerId'] == playerId:
                 pToAdmin = p
-        if p:
-            p['isAdmin'] = True
+                break
+
+        if pToAdmin:
+            pToAdmin['isAdmin'] = True
 
 
     def _repr_(self):
@@ -114,6 +123,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, async_mode=async_mode, manage_session=True)
 thread = None
 thread_lock = Lock()
+
 app.cadaverGames = cadaverGames
 
 
@@ -134,29 +144,44 @@ def index():
 
 @socketio.event
 def my_event(message):
+    
+    response = {}
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': message['data'], 'count': session['receive_count'],
-         'type': 'my_event'})
+
+    response.update({'count': session['receive_count']})
+    response.update({'type': 'my_event'})
+    response.update({'data': message['data']})
+
+    emit('my_response', response)
 
 
 @socketio.event
 def my_broadcast_event(message):
+
+    response = {}
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': message['data'], 'count': session['receive_count'],
-         'type':'my_broadcast_event'}, broadcast=True)
+
+    response.update({'count': session['receive_count']})
+    response.update({'type': 'my_broadcast_event'})
+    response.update({'data': message['data']})
+    
+    emit('my_response', response, broadcast=True)
 
 
 @socketio.event
 def joinGame(message):
 
+    response = {}
     room = message['room']
 
-    join_room(room)
+    join_room(room) # socket room
+
     session['receive_count'] = session.get('receive_count', 0) + 1
 
-
+    response.update({'count': session['receive_count']})
+    response.update({'type': 'joinGame'})
+    response.update({'data': f'{request.sid} joined game: ' + room})
+    
     with app.app_context():
 
         if room not in app.cadaverGames.keys():
@@ -171,10 +196,7 @@ def joinGame(message):
 
         print(app.cadaverGames[room].toJSON())
 
-    emit('my_response',
-         {'data': f'{request.sid} joined game: ' + room, 'type': 'joinGame',
-        'count': session['receive_count']},to=room)
-
+    emit('my_response', response ,to=room)
 
 
 @socketio.event
@@ -183,63 +205,79 @@ def startGame(message):
     room = message['room']
     response = {}
 
+    response.update({'count': session['receive_count']})
+    response.update({'type':'startGame'})
+    response.update({'gameId': room})
+
     with app.app_context():
 
         #TODO check for existing room, raise error otherwise
 
         game = app.cadaverGames[room]
         game.startGame()
-
-        response.update({'type':'startGame'})
-        response.update({'gameId': room})
-       
-    
-    response.update({'count': session['receive_count']})
     
     print(app.cadaverGames[room].toJSON())
 
-    emit('response_startGame',
-         response, to=room)
-
+    emit('response_startGame', response, to=room)
 
 
 
 @socketio.event
 def leaveGame(message):
 
+    response = {}
     room = message['room']
-    callbackId = message['callbackId']
+    try:
+        callbackId = message['callbackId']
+    except:
+        callbackId = ""
 
-    leave_room(message['room'])
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': 'In rooms: ' + ', '.join(rooms()),
-         'type': 'leaveGame',
-          'count': session['receive_count'], 'callbackId': callbackId})
+    response.update({'count': session['receive_count']})
+    response.update({'type':'leaveGame'})
+    response.update({'data':f'{request.sid} left the room '+room})
+    response.update({'gameId': room})
+    
+    # try:
+    #     callbackId = message['callbackId']
+    # except:
+    #     callbackId = ""
+
+    # response.update({'callbackId': callbackId})
+  
+    emit('my_response', response, to=room)
+
+    leave_room(message['room']) # socket room
 
     with app.app_context():
-        try:
-            print("playerId",request.sid)
-            app.cadaverGames[room].leaveGame(request.sid)
-        except:
-            pass
-
+        app.cadaverGames[room].leaveGame(request.sid)
+       
 
 @socketio.on('close_room')
 def on_close_room(message):
+
+    response = {}
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response', {'data': 'Room ' + message['room'] + ' is closing.',
-                         'count': session['receive_count'], 'type': 'close_room'},
-         to=message['room'])
+    response.update({'count': session['receive_count']})
+    response.update({'data': 'Room ' + message['room'] + ' is closing.'})
+    response.update({'type':'close_room'})
+
     close_room(message['room'])
 
+    emit('my_response', response, to=message['room'])
+
+    
 
 @socketio.event
 def my_room_event(message):
+
+    response = {}
     session['receive_count'] = session.get('receive_count', 0) + 1
-    emit('my_response',
-         {'data': message['data'], 'count': session['receive_count'], 'type': 'my_room_event'},
-         to=message['room'])
+    response.update({'count': session['receive_count']})
+    response.update({'data': message['data']})
+    response.update({'type': 'my_room_event'})
+    
+    emit('my_response', response, to=message['room'])
 
 
 @socketio.event
@@ -248,13 +286,15 @@ def disconnect_request():
     def can_disconnect():
         disconnect()
 
+    response = {}
     session['receive_count'] = session.get('receive_count', 0) + 1
+    response.update({'count': session['receive_count']})
+    response.update({'data': 'Disconnected!'})
+    response.update({'type': 'disconnect_request'})
     # for this emit we use a callback function
     # when the callback function is invoked we know that the message has been
     # received and it is safe to disconnect
-    emit('my_response',
-         {'data': 'Disconnected!', 'count': session['receive_count'], 'type': 'disconnect_request'},
-         callback=can_disconnect)
+    emit('my_response', response, callback=can_disconnect)
 
 @socketio.event
 def payload_request(message):
@@ -288,11 +328,15 @@ def connect(message):
     with thread_lock:
         if thread is None:
             thread = socketio.start_background_task(background_thread)
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    print("session",session)
-    print("nueva conexión")
+
+    response = {}
+
+    response.update({'count':0})
+    response.update({'data': 'Connected'})
+    response.update({'type': 'connect'})
+
     print(message)
-    emit('my_response', {'data': 'Connected', 'count': 0, 'type': 'connect'})
+    emit('my_response', response)
 
 
 @socketio.on('disconnect')
