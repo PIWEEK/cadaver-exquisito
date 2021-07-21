@@ -7,7 +7,7 @@
 (ns app.util.spec
   "Data manipulation and query helper functions."
   (:refer-clojure :exclude [assert])
-  #?(:cljs (:require-macros [app.util.spec :refer [assert]]))
+  #?(:cljs (:require-macros [app.util.spec]))
   (:require
    #?(:clj  [clojure.spec.alpha :as s]
       :cljs [cljs.spec.alpha :as s])

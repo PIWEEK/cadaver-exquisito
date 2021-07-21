@@ -8,18 +8,46 @@
   (:require
    [app.store :as st]
    [app.ui.icons :as i]
+   [app.ui.context :as ctx]
+   [app.util.uuid :as uuid]
+   [app.util.webapi :as wa]
+   [app.util.websockets :as ws]
+   [cuerdas.core :as str]
    [potok.core :as ptk]
    [rumext.alpha :as mf]))
 
 (mf/defc start-screen
-  [props]
-  [:*
-   [:div.title "Welcome to cadaver exquisito!"]
-   [:div.form
-    [:input {:type "text"
-             :placeholder "Enter your name..."
-             :default-value ""}]]
+  [{:keys [room]}]
+  (let [pname   (mf/use-state "")
+        wsock   (mf/use-ctx ctx/wsocket)
+        waiting (mf/use-state false)
 
-   [:div.actions
-    [:div.button.button-main {:on-click #(st/nav! {:screen :room})}
-     "Create a new game"]]])
+        on-submit
+        (fn [event]
+          (let [socket (:socket wsock)
+                params {:room (or room (str (uuid/next)))
+                        :name @pname
+                        :tabID (:session-id wsock)}]
+            (reset! waiting true)
+            (ws/send! socket "joinGame" params)))]
+
+    [:*
+     (if (true? @waiting)
+       [:div.notice "joining game...."]
+       [:*
+        [:div.title "Welcome to cadaver exquisito!"]
+        [:div.form
+         [:input {:type "text"
+                  :placeholder "Enter your name..."
+                  :value @pname
+                  :on-change #(let [val (-> (wa/get-target %)
+                                            (wa/get-value))]
+                                (reset! pname val))}]]
+
+        [:div.actions
+         (when-not (str/blank? @pname)
+           [:div.button.button-main {:on-click on-submit}
+            (if room
+              "Join game"
+              "Create a new game")])]])]))
+

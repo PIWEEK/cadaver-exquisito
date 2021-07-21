@@ -17,22 +17,23 @@
    [lambdaisland.glogi :as log]
    [lambdaisland.uri :as u]
    [okulary.core :as l]
+   [rumext.alpha :as mf]
    [potok.core :as ptk]))
 
 (log/set-level 'app.store :info)
 
-(defonce state (l/atom {:nav {:screen "start"}}))
+(defn get-initial-state
+  []
+  (let [params (-> (:query (wa/get-current-uri))
+                   (u/query-string->map))]
+    {:params (or params {:screen "start"})}))
 
-(def nav-ref
-  (l/derived :nav state))
+(defonce state (l/atom (get-initial-state)))
 
-(def message-ref
-  (l/derived :message state))
-
-(add-watch nav-ref ::router
+(add-watch state ::router
            (fn [_ _ oval nval]
-             (when (not= oval nval)
-               (let [query (u/map->query-string nval)
+             (when (not= (:params oval) (:params nval))
+               (let [query (u/map->query-string (:params nval))
                      uri   (-> (wa/get-current-uri)
                                (assoc :query query))]
                  (.pushState ^js js/history #js {} "" (str uri))))))
@@ -42,5 +43,17 @@
 
 (defn nav!
   [params]
-  (swap! state assoc :nav params))
+  (swap! state assoc :params params))
 
+(defn update-game
+  [state game origin]
+  (-> state
+      (update :params (fn [params]
+                        (if game
+                          (let [status (get game "status")
+                                params (assoc params :room (get game "room"))]
+                            (cond-> params
+                              (= status "waiting") (assoc :screen "wait")
+                              (= status "ongoing") (assoc :screen "draw")))
+                          (assoc params :screen "start"))))
+      (assoc :game game)))

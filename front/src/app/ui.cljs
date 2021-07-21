@@ -7,15 +7,17 @@
 (ns app.ui
   (:require
    [lambdaisland.uri :as u]
+   [cljs.core.async :as a]
    [app.config :as cf]
    [app.events]
    [app.store :as st]
+   [app.util.uuid :as uuid]
    [app.util.spec :as us]
    [app.util.data :as d]
    [app.util.webapi :as wa]
    [app.ui.context :as ctx]
    [app.ui.screens.start :refer [start-screen]]
-   [app.ui.screens.room :refer [room-screen]]
+   [app.ui.screens.wait :refer [wait-screen]]
    [app.ui.screens.draw :refer [draw-screen]]
    [app.ui.rhooks :as rh]
    [app.util.websockets :as ws]
@@ -24,25 +26,82 @@
    [potok.core :as ptk]
    [rumext.alpha :as mf]))
 
+(defn get-session-id
+  []
+  (let [current (.getItem ^js js/sessionStorage "sessionId")]
+    (or current
+        (let [id (str (uuid/random))]
+          (.setItem js/sessionStorage "sessionId" id)
+          id))))
+
+(mf/defc game
+  [{:keys [state]}]
+  (let [{:keys [room screen]} (:params state)]
+    [:div.screen {:class (str "screen-" screen)}
+     (cond
+       (= "start" screen)
+       [:& start-screen {:room room}]
+
+       :else
+       (let [game (:game state)]
+         (cond
+           (= "wait" screen)
+           [:& wait-screen {:game game}]
+
+           (= "draw" screen)
+           [:& draw-screen {:game game}]
+
+           :else
+           [:span "not found"])))]))
+
 (declare initialize-websocket)
 
 (mf/defc app
   [props]
-  (let [nav         (mf/deref st/nav-ref)
-        orientation (rh/use-orientation)]
+  (let [state       (mf/deref st/state)
+        orientation (rh/use-orientation)
+        session-id  (mf/use-memo get-session-id)
+        wsocket     (rh/use-socket session-id)
+        msgbus      (mf/use-memo #(a/chan 1))]
 
-    ;; (mf/use-effect initialize-websocket)
+    (mf/use-effect
+     (mf/deps wsocket)
+     (partial initialize-websocket wsocket msgbus))
 
-    [:main.layout
-     (if (= :portrait orientation)
-       [:div.notice "Please put your smartphone in horizontal position."]
-       [:div.screen {:class (str "screen-" (name (:screen nav)))}
-        (case (:screen nav)
-          "start" [:& start-screen]
-          "room" [:& room-screen]
-          "draw" [:& draw-screen]
-          [:span "not found"])])]))
+    [:& (mf/provider ctx/wsocket) {:value wsocket}
+     [:& (mf/provider ctx/msgbus) {:value msgbus}
+      [:& (mf/provider ctx/session-id) {:value session-id}
+       [:main.layout
+        (cond
+          (= :portrait orientation)
+          [:div.notice "Please put your smartphone in horizontal position."]
 
-;; (defn- initialize-websocket
-;;   []
-;;   (let [
+          (false? (:connected wsocket))
+          [:div.notice "Connecting..."]
+
+          :else
+          [:& game {:state state}])]]]]))
+
+(defn initialize-websocket
+  [{:keys [socket] :as wsocket}]
+  (let [on-payload
+        (fn [{:keys [data]}]
+          (let [game   (get data "data")
+                origin (get data "origin")]
+            ;; (cljs.pprint/pprint data)
+            (swap! st/state st/update-game game origin)))
+
+        on-end-turn
+        (fn [{:keys [data] :as event}]
+          (prn "on-end-turn" event))
+
+        on-connect
+        (fn [params]
+          (prn "on-connect" params))]
+
+    (-> socket
+        (ws/watch! "payload" on-payload)
+        (ws/watch! "endTurn" on-end-turn)
+        #_(ws/watch! "connect" on-connect))
+
+    (constantly nil)))

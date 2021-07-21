@@ -8,6 +8,8 @@
   (:require
    [app.store :as st]
    [app.ui.icons :as i]
+   [app.ui.context :as ctx]
+   [cljs.core.async :as a]
    [potok.core :as ptk]
    [goog.events :as gev]
    [rumext.alpha :as mf]))
@@ -128,26 +130,53 @@
       (doseq [key keys]
         (gev/unlistenByKey key)))))
 
+
+(defn- clean-drawing!
+  [node]
+  (let [ctx (.getContext ^js node "2d")]
+    (.clearRect ^js ctx 0 0 (.-width node), (.-height node))))
+
 (mf/defc draw-screen
-  [props]
-  (let [canvas    (mf/use-state nil)
-        on-canvas (mf/use-callback #(reset! canvas %))]
+  {::mf/wrap [mf/memo]}
+  [{:keys [game]}]
+  (let [canvas (mf/use-ref)
+        msgbus (mf/use-ctx ctx/msgbus)
+
+        turn   (get game "activeCanvasTurn")
+        last?  (get game "isLastCanvasTurn")
+        wait   (mf/use-state nil)]
 
     (mf/use-effect
-     (mf/deps @canvas)
+     #(initialize! (mf/ref-val canvas)))
+
+    (mf/use-effect
+     (mf/deps turn)
      (fn []
-       (when-let [node (deref canvas)]
-         (initialize! node))))
+       (prn "initialize turn" turn)
+       (let [cch (a/chan 1)]
+         (a/go
+           (let [[msg port] (a/alts! [msgbus cch])]
+             (when (= port msgbus)
+               (reset! wait turn))))
+
+         (clean-drawing! (mf/ref-val canvas))
+         (fn []
+           (a/close! cch)))))
+
+    (cljs.pprint/pprint game)
 
     [:*
+     (when @wait
+       [:div.notice-overlay
+        [:span.message "Waiting next turn..."]])
      [:div.header]
      [:div.main-content
-      [:div.left-sidebar
-       ]
+      [:div.left-sidebar]
       [:div.main-panel
        [:div.draw-panel
-        [:canvas {:ref on-canvas}]
+        [:canvas {:ref canvas}]
         [:div.top-overlay {:style {:height "50px"}}]
         [:div.bottom-overlay {:style {:height "50px"}}]]]
       [:div.right-sidebar]]
      [:div.footer]]))
+

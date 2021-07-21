@@ -10,6 +10,7 @@
    [app.util.data :as d]
    [app.util.timers :as ts]
    [app.util.webapi :as wa]
+   [app.util.websockets :as ws]
    [goog.events :as events]
    [rumext.alpha :as mf]))
 
@@ -25,3 +26,26 @@
            (events/unlistenByKey key)))))
 
         @orientation))
+
+(defn use-socket
+  [session-id]
+  (let [socket    (mf/use-memo (mf/deps session-id) #(ws/connect session-id))
+        connected (mf/use-state false)]
+
+    (mf/use-effect
+     (mf/deps socket)
+     (fn []
+       (ws/watch! socket "connect" (fn [_] (reset! connected (.-connected ^js socket))))
+       (ws/watch! socket "disconnect" (fn [_] (reset! connected (.-connected ^js socket))))
+       (ws/watch! (.-io socket) "error" (fn [e] (js/console.log "ERROR" e)))
+       (fn []
+         (ws/close! socket))))
+
+    (mf/use-memo
+     (mf/deps @connected socket)
+     (fn []
+       {:connected @connected
+        :session-id session-id
+        :socket socket}))))
+
+

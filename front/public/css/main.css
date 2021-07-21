@@ -137,6 +137,69 @@ main > .message .content .icon {
   padding: 20vw;
   text-align: center;
 }
+
+.notice-overlay {
+  color: white;
+  background-color: black;
+  font-size: 3vh;
+  display: flex;
+  width: 100vw;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  justify-content: center;
+  align-items: center;
+}
+
+.player-avatar {
+  /* outline: 1px solid white; */
+  width: 15vh;
+  height: 11vh;
+  position: relative;
+}
+
+.player-avatar > svg {
+  width: 100%;
+  height: 100%;
+}
+
+.player-avatar .eyes{
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+}
+.player-avatar .eye{
+  width: 14%;
+  height: 12%;
+  background: #fff;
+  display: inline-block;
+  margin: 3%;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.player-avatar .ball{
+  width: 0.3vh;
+  height: 0.3vh;
+  background: var(--color-black);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+}
+
 .screen {
   color: white;
   display: flex;
@@ -209,12 +272,12 @@ main > .message .content .icon {
 
 /* --- ROOM SCREEN --- */
 
-.screen-room {
+.screen-wait {
   /* width: 100%; */
   /* height: 100%; */
 }
 
-.screen-room .profile {
+.screen-wait .profile {
   /* outline: 1px solid red; */
   display: flex;
   flex-direction: column;
@@ -223,21 +286,21 @@ main > .message .content .icon {
   font-size: var(--font-size-main);
 }
 
-.screen-room .profile .avatar {
-  width: 10vh;
-  height: 10vh;
-}
+/* .screen-wait .profile .avatar { */
+/*   width: 10vh; */
+/*   height: 10vh; */
+/* } */
 
-.screen-room .profile .avatar > svg {
-  width: 100%;
-  height: 100%;
-}
+/* .screen-wait .profile .avatar > svg { */
+/*   width: 100%; */
+/*   height: 100%; */
+/* } */
 
-.screen-room .profile > div:not(:last-child) {
+.screen-wait .profile > div:not(:last-child) {
   margin-bottom: 4vh;
 }
 
-.screen-room .profile .message {
+.screen-wait .profile .message {
   padding: 0px 30px;
   text-align: center;
   font-size: var(--font-size-main);
@@ -276,38 +339,41 @@ main > .message .content .icon {
 .share-link .label {
   font-size: var(--font-size-small);
   text-align: center;
+  color: white;
+  text-decoration: none;
   /* outline: 1px solid red; */
 }
 
-.screen-room .share-link .circle-button > .label {
+.screen-wait .share-link .circle-button > .label {
   padding-top: 4vh;
 }
 
 
-.screen-room .participants {
+.screen-wait .participants {
   display: flex;
   /* outline: 1px solid white; */
   margin-top: 14vh;
   font-size: var(--font-size-small);
 }
 
-.screen-room .participant {
+.screen-wait .participant {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.screen-room .participant:not(:last-child) {
+.screen-wait .participant:not(:last-child) {
   margin-right: 2vw;
 }
 
 
-.screen-room .participant .avatar {
-  width: 5vh;
-  height: 5vh;
+.screen-wait .participant .player-avatar {
+  /* outline: 1px solid red; */
+  width: 11vh;
+  height: 7vh;
 }
 
-.screen-room .participants .avatar > svg {
+.screen-wait .participants .avatar > svg {
   width: 100%;
   height: 100%;
 }

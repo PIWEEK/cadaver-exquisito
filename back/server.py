@@ -65,9 +65,8 @@ class CadaverGame:
         self.avatarindex = 0
         self.status = "waiting"
 
-    def joinGame(self, playerId, name, isAdmin):
-
-        p = {"playerId": playerId, "name": name, "avatar": self.avatars[self.avatarindex], "isAdmin": isAdmin}
+    def joinGame(self, playerId, playerName, isAdmin):
+        p = {"playerId": playerId, "name": playerName, "avatar": self.avatars[self.avatarindex], "isAdmin": isAdmin}
         self.players.append(p)
         self.avatarindex += 1
 
@@ -213,7 +212,8 @@ def joinGame(message):
 
     response = {}
     room = message['room']
-    tabID = session["tabID"]
+    playerID = session["playerID"]
+    playerName = message['name']
 
     join_room(room) # socket room
 
@@ -222,25 +222,27 @@ def joinGame(message):
 
     response.update({'count': session['receive_count']})
     response.update({'origin': 'joinGame'})
-    response.update({'info': f'{tabID} joined game: ' + room})
+    response.update({'info': f'{playerID} joined game: ' + room})
 
     with app.app_context():
 
         if room not in app.cadaverGames.keys():
             game = CadaverGame(room,2048,'https://')
-            game.joinGame(tabID, tabID, True)
+            game.joinGame(playerID, playerName, True)
             app.cadaverGames[room] = game
 
         else:
-            if not app.cadaverGames[room].hasPlayer(tabID):
-                app.cadaverGames[room].joinGame(tabID, tabID, False)
+            if not app.cadaverGames[room].hasPlayer(playerID):
+                app.cadaverGames[room].joinGame(playerID, playerName, False)
                 if len(app.cadaverGames[room].players) == 1:
-                    app.cadaverGames[room].giveAdmin[tabID]
+                    app.cadaverGames[room].giveAdmin[playerID]
 
         game = app.cadaverGames[room]
         response.update({'data': game.toJSON()})
-        
+
         #print(game.toJSON())
+
+    print("payload", response)
 
     emit('payload', response, to=room)
 
@@ -271,7 +273,7 @@ def startGame(message):
 def endTurn(message):
 
     room = session["room"]
-    tabID = session["tabID"]
+    playerID = session["playerID"]
     response = {}
 
     response.update({'count': session['receive_count']})
@@ -285,7 +287,7 @@ def endTurn(message):
 def endGame(message):
 
     room = session["room"]
-    tabID = session['tabID']
+    playerID = session['playerID']
     response = {}
 
     with app.app_context():
@@ -302,7 +304,7 @@ def endGame(message):
 def sendCanvas(message):
 
     room = session["room"]
-    tabID = session['tabID']
+    playerID = session['playerID']
     dataURI = message['dataURI']
     print(message)
 
@@ -313,8 +315,8 @@ def sendCanvas(message):
 
     with app.app_context():
         game = app.cadaverGames[room]
-        canvasId = game.canvasTurns[tabID][game.activeCanvasTurn][0]
-        game.receiveTurnFromPlayer(tabID, canvasId, dataURI)
+        canvasId = game.canvasTurns[playerID][game.activeCanvasTurn][0]
+        game.receiveTurnFromPlayer(playerID, canvasId, dataURI)
 
         if game.allCanvasAreIn() and not game.isLastCanvasTurn: #final canvas on a non final turn
             response.update({'info': 'Yours was the last canvas!'})
@@ -339,7 +341,7 @@ def sendCanvas(message):
 def nextTurn(message):
 
     room = session["room"]
-    tabID = session['tabID']
+    playerID = session['playerID']
     response = {}
 
     response.update({'count': session['receive_count']})
@@ -350,7 +352,7 @@ def nextTurn(message):
 
         #TODO check for existing room, raise error otherwise
         game = app.cadaverGames[room]
-        if game.hasPlayer(tabID) and game.isAdmin(tabID):
+        if game.hasPlayer(playerID) and game.isAdmin(playerID):
 
             game.nextTurn()
 
@@ -368,17 +370,17 @@ def leaveGame(message):
 
     response = {}
     room = session["room"]
-    tabID = session["tabID"]
+    playerID = session["playerID"]
 
     session['receive_count'] = session.get('receive_count', 0) + 1
     response.update({'count': session['receive_count']})
     response.update({'origin':'leaveGame'})
-    response.update({'info':f'{tabID} left the room '+room})
+    response.update({'info':f'{playerID} left the room '+room})
 
     with app.app_context():
         game = app.cadaverGames[room]
         response.update({'data': game.toJSON()})
-        game.leaveGame(tabID)
+        game.leaveGame(playerID)
 
     leave_room(room) # socket room
 
@@ -430,22 +432,23 @@ def connect(message):
         if thread is None:
             thread = socketio.start_background_task(background_thread)
 
-    tabID = request.args.get('tabID')
+    playerID = request.args.get('playerID')
 
-    session["tabID"] = tabID
+    session["playerID"] = playerID
 
     response = {}
     room = None
 
-    #print("socketio",tabID)
+    #print("socketio",playerID)
 
     with app.app_context():
         for k, v in app.cadaverGames.items():
-            if v.hasPlayer(tabID):
-                print(f"Welcome back to your {k} room!",tabID)
+            if v.hasPlayer(playerID):
+                print(f"Welcome back to your {k} room!",playerID)
                 join_room(k)
 
                 game = app.cadaverGames[k]
+                session["receive_count"] = 0
                 session["room"] = k
                 room = k
                 response.update({'data': game.toJSON()})

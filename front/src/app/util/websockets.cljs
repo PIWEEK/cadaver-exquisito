@@ -5,54 +5,37 @@
 ;; Copyright (c) UXBOX Labs SL
 
 (ns app.util.websockets
-  "A interface to webworkers exposed functionality."
+  "SocketIO interface with backend."
   (:require
+   ["socket.io-client" :as io]
    [goog.events :as ev]
-   [cljs.core.async :as a])
-  (:import
-   goog.net.WebSocket
-   goog.net.WebSocket.EventType))
+   [app.util.webapi :as wa]
+   [cljs.core.async :as a]))
 
-(defn open
-  [uri]
-  (let [ws  (WebSocket. #js {:autoReconnect true})
-        in  (a/chan 128)
-        out (a/chan 128)
-        cls (a/chan 1)
-        res (a/chan 1)
+(def uri
+  (wa/get-current-uri))
 
-        on-message
-        (fn [message]
-          (a/offer! in {::type :msg ::data message}))
+      ;; (assoc :query "/socket")))
 
-        on-error
-        (fn [error]
-          (a/offer! in {::type :err ::data error}))
+(defn connect
+  [session-id]
+  (let [socket (io #js {:query #js {:playerID session-id}
+                        ;; :path "/api/socket.io"
+                        ;; :transports #js ["polling"]
+                        })]
+    socket))
 
-        on-open
-        (fn [event]
-          (a/offer! out {:type "hello" :session-id 1}))
+(defn send!
+  [socket event data]
+  (prn "ws/send!" event (clj->js data))
+  (.emit ^js socket event (clj->js data)))
 
-        kys [(ev/listen ws EventType.MESSAGE #(on-message (.-message ^js %)))
-             (ev/listen ws EventType.ERROR on-error)
-             (ev/listen ws EventType.OPENED on-open)]]
+(defn watch!
+  [socket ename callback]
+  (.on ^js socket ename (fn [payload]
+                          (callback {::data payload :data (js->clj payload)})))
+  socket)
 
-    (.open ws (str uri))
-
-    (a/go
-      (a/<! cls)
-      (a/close! in)
-      (a/close! out)
-      (.close ^js ws)
-      (run! ev/unlistenByKey kys))
-
-    (a/go-loop []
-      (let [[val port] (a/alts! [cls out])]
-        (when (= port out)
-          (.send ^js ws val)
-          (recur))))
-
-    {::in in
-     ::out out
-     ::cls cls}))
-
+(defn close!
+  [socket]
+  (.close ^js socket))

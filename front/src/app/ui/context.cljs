@@ -8,4 +8,6 @@
   (:require
    [rumext.alpha :as mf]))
 
-(def orientation (mf/create-context nil))
+(def session-id (mf/create-context nil))
+(def wsocket    (mf/create-context nil))
+(def msgbus     (mf/create-context nil))
