@@ -13,7 +13,7 @@
             //document.getElementById("playerId").value = tabId;
 
 
-            const socket = io({ query: "tabID="+tabID });
+            const socket = io({ query: "playerID="+tabID });
             //var socket = io();
 
             // Event handler for new connections.
@@ -79,7 +79,7 @@
                 return false;
             });
             $('form#joinGame').submit(function(event) {
-                socket.emit('joinGame', {"tabID": tabID, room: $('#join_game').val()});
+                socket.emit('joinGame', {"playerID": tabID, "name": "aname", room: $('#join_game').val()});
                 return false;
             });
             $('form#leaveGame').submit(function(event) {

@@ -1,4 +1,4 @@
-import json, uuid
+import json, uuid, pprint
 from datauri import DataURI
 from random import randint, choice, shuffle
 from threading import Lock
@@ -9,6 +9,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, \
 
 
 cadaverGames = {}
+pp = pprint.PrettyPrinter(indent=4)
 
 def generateDrawings(numPlayers):
     drawings = []
@@ -94,6 +95,41 @@ class CadaverGame:
                 newAdmin = choice(self.players)
                 self.giveAdmin(newAdmin['playerId'])
 
+    def assignCanvastoPlayerTurns(self):
+
+        # This canvas-player-turn assignment is not immediately trivial
+        # For n players, we have n turns with n canvas
+        # Each player gets one ordered canvas per turn so that
+        # they get distinct canvas position per drawing pero turn
+        # For instance. A 3 player game will get player 1 with
+        # first canvas on first drawing, 2nd on 2nd drawing and 3rd on 3rd
+
+
+        drawings = self.drawings
+        size = len(self.players)
+
+        canvas_list = [canvas for sublist in drawings for canvas in sublist]
+        
+        pos = range(size)
+        canvas_turn_dict = {}
+
+        for p in pos:
+            playerID = self.players[p]["playerId"]
+            l = {}
+            for i in range(size):
+                index = (i*(size+1)+size*p)%len(canvas_list)
+                c = canvas_list[index]
+                if i==0:
+                    prev_c = None
+                else:
+                    index = (i*(size+1)+size*p)%len(canvas_list)-1
+                    prev_c = canvas_list[index]
+                l[i] = (c,prev_c)
+            canvas_turn_dict[playerID] = l
+
+        return canvas_turn_dict
+                  
+
 
     def startGame(self):
 
@@ -105,20 +141,20 @@ class CadaverGame:
             self.isLastCanvasTurn = True
         count = 0
 
-        for p in self.players:
-            pdict = {}
-            turn = 0
-            for i in self.players:
-                if turn == 0:
-                    pdict.update({turn: [self.drawings[count][turn],None]})
-                else:
-                    pdict.update({turn: [self.drawings[count][turn],self.drawings[count][turn-1]]})
-                turn +=1
-            count += 1
+        # for p in self.players:
+        #     pdict = {}
+        #     turn = 0
+        #     for i in self.players:
+        #         if turn == 0:
+        #             pdict.update({turn: [self.drawings[count][turn],None]})
+        #         else:
+        #             pdict.update({turn: [self.drawings[count][turn],self.drawings[count][turn-1]]})
+        #         turn +=1
+        #     count += 1
 
-            turnsdict.update({p["playerId"]: pdict})
+        #     turnsdict.update({p["playerId"]: pdict})
 
-        self.canvasTurns = turnsdict
+        self.canvasTurns = self.assignCanvastoPlayerTurns()
         self.status = "ongoing"
 
     def receiveTurnFromPlayer(self, playerId, canvasId, canvasDataURI):
@@ -358,7 +394,8 @@ def nextTurn(message):
 
         response.update({'data': game.toJSON()})
 
-        #print(game.toJSON())
+        
+        pp.pprint(game.toJSON())
     print("It's time for a new turn!")
     emit('payload', response, to=room)
 
