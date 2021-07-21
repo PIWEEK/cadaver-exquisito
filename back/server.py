@@ -211,7 +211,7 @@ def index():
 def joinGame(message):
 
     response = {}
-    room = session['room']
+    room = request.args.get('room')
     tabID = session["tabID"]
 
     join_room(room) # socket room
