@@ -10,7 +10,9 @@
             // The connection URL has the following format, relative to the current page:
             //     http[s]://<domain>:<port>[/<namespace>]
             var tabID = sessionStorage.tabID ? sessionStorage.tabID : sessionStorage.tabID = Math.random();
-            
+            //document.getElementById("playerId").value = tabId;
+
+
             const socket = io({ query: "tabID="+tabID });
             //var socket = io();
 
@@ -35,17 +37,11 @@
 
             // payload
             socket.on('payload', function(msg, cb) {
-                $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': TYPE: ' + msg.type + ' PAYLOAD: ' +msg.data).html());
+                $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': ORIGIN: ' + msg.origin + ' PAYLOAD: ' +msg.data).html());
                 if (cb)
                     cb();
             });
 
-            // startGame
-            socket.on('response_startGame', function(msg, cb) {
-                $('#log').append('<br>' + $('<div/>').text('Received #' + msg.count + ': TYPE: ' + msg.type + ' GAMEID: ' +msg.gameId).html());
-                if (cb)
-                    cb();
-            });
 
             // Interval function that tests message latency by sending a "ping"
             // message. The server then responds with a "pong" message and the
@@ -94,6 +90,10 @@
                 socket.emit('startGame', {room: $('#start_game').val()});
                 return false;
             });
+            $('form#nextTurn').submit(function(event) {
+                socket.emit('nextTurn', {room: $('#next_turn').val()});
+                return false;
+            });
 
             $('form#send_room').submit(function(event) {
                 socket.emit('my_room_event', {room: $('#room_name').val(), data: $('#room_data').val()});
@@ -114,6 +114,7 @@
 
             
         });
+        $(document).getElementById("playerId").value = tabId;
     </script>
 </head>
 <body>
@@ -143,6 +144,13 @@
     <form id="startGame" method="POST" action='#'>
         <input type="text" name="start_game" id="start_game" placeholder="Game Name">
         <input type="submit" value="Start Game">
+    </form>
+
+    <form id="nextTurn" method="POST" action='#'>
+        <input type="text" name="next_turn" id="next_turn" placeholder="Game Name">
+        <input type="text" name="playerId" id="playerId">
+
+        <input type="submit" value="Next Turn">
     </form>
 
     <form id="payload" method="POST" action="#">

@@ -21,21 +21,25 @@ def generateDrawings(numPlayers):
     return drawings    
 
 def generateAvatars(multiples=5):
-    shape = [1,2,3,4,5,6,7,8,9]
-    color = ["a","b","c","d","e","f","g","h","i","j","k"]
+    shape = ["S"+str(i) for i in range(13)]
+    color = ["c"+str(i) for i in range(10)]
+    animation = ["A"+str(i) for i in range(7)]
 
 
     if multiples < 1:
         multiples = 1
     shapes = []
     colors = []
+    animations = []
     for i in range(multiples):
         shuffle(shape)
         shapes+=shape[:]
         shuffle(color)
         colors+=color[:]
+        shuffle(animation)
+        animations+=animation[:]
 
-    avatars = list(zip(shapes, colors))
+    avatars = list(zip(shapes, colors, animations))
     print(avatars)
     return avatars
 
@@ -44,10 +48,9 @@ def generateAvatars(multiples=5):
 
 class CadaverGame:
 
-    def __init__(self, gameId, name, canvasWidth, URL):
+    def __init__(self, room, canvasWidth, URL):
 
-        self.gameId = gameId
-        self.name = name
+        self.room = room
         self.canvasWidth = canvasWidth
         self.URL = URL
 
@@ -113,8 +116,23 @@ class CadaverGame:
         self.canvasTurns = turnsdict
         self.status = "ongoing"
         
+    def nextTurn(self):
+
+        if not self.isLastCanvasTurn:
+            self.activeCanvasTurn +=1
+            if len(self.players) == self.activeCanvasTurn + 1:
+                self.isLastCanvasTurn = True
+
     def buildAvatars(self):
         self.avatars = generateAvatars()
+
+    def isAdmin(self, playerId):
+
+        for p in self.players:
+            if p['playerId'] == playerId and p['isAdmin'] == True:
+                return True
+
+        return False
 
     def giveAdmin(self, playerId):
 
@@ -166,31 +184,6 @@ def index():
     return render_template('index.html', async_mode=socketio.async_mode)
 
 
-@socketio.event
-def my_event(message):
-    
-    response = {}
-    session['receive_count'] = session.get('receive_count', 0) + 1
-
-    response.update({'count': session['receive_count']})
-    response.update({'type': 'my_event'})
-    response.update({'data': message['data']})
-
-    emit('my_response', response)
-
-
-@socketio.event
-def my_broadcast_event(message):
-
-    response = {}
-    session['receive_count'] = session.get('receive_count', 0) + 1
-
-    response.update({'count': session['receive_count']})
-    response.update({'type': 'my_broadcast_event'})
-    response.update({'data': message['data']})
-    
-    emit('my_response', response, broadcast=True)
-
 
 @socketio.event
 def joinGame(message):
@@ -204,24 +197,28 @@ def joinGame(message):
     session['receive_count'] = session.get('receive_count', 0) + 1
 
     response.update({'count': session['receive_count']})
-    response.update({'type': 'joinGame'})
-    response.update({'data': f'{tabID} joined game: ' + room})
+    response.update({'origin': 'joinGame'})
+    response.update({'info': f'{tabID} joined game: ' + room})
     
     with app.app_context():
 
         if room not in app.cadaverGames.keys():
-            game = CadaverGame(randint(0,1000),room,2048,'https://')
+            game = CadaverGame(room,2048,'https://')
             game.joinGame(tabID, tabID, True)
             app.cadaverGames[room] = game
 
-        if not app.cadaverGames[room].hasPlayer(tabID):
-            app.cadaverGames[room].joinGame(tabID, tabID, False)
-            if len(app.cadaverGames[room].players) == 1:
-                app.cadaverGames[room].giveAdmin[tabID] 
+        else:
+            if not app.cadaverGames[room].hasPlayer(tabID):
+                app.cadaverGames[room].joinGame(tabID, tabID, False)
+                if len(app.cadaverGames[room].players) == 1:
+                    app.cadaverGames[room].giveAdmin[tabID]
 
-        print(app.cadaverGames[room].toJSON())
+        game = app.cadaverGames[room]
+        response.update({'data': game.toJSON()})
+        
+        print(game.toJSON())
 
-    emit('my_response', response ,to=room)
+    emit('payload', response, to=room)
 
 
 @socketio.event
@@ -231,8 +228,8 @@ def startGame(message):
     response = {}
 
     response.update({'count': session['receive_count']})
-    response.update({'type':'startGame'})
-    response.update({'gameId': room})
+    response.update({'origin':'startGame'})
+    response.update({'info': 'Game has started!'})
 
     with app.app_context():
 
@@ -240,10 +237,37 @@ def startGame(message):
 
         game = app.cadaverGames[room]
         game.startGame()
+        response.update({'data': game.toJSON()})
     
-    print(app.cadaverGames[room].toJSON())
+        print(game.toJSON())
 
-    emit('response_startGame', response, to=room)
+    emit('payload', response, to=room)
+
+@socketio.event
+def nextTurn(message):
+
+    room = message['room']
+    tabID = message['tabID']
+    response = {}
+
+    response.update({'count': session['receive_count']})
+    response.update({'origin':'nextTurn'})
+    response.update({'info': 'Next turn!'})
+
+    with app.app_context():
+
+        #TODO check for existing room, raise error otherwise
+        game = app.cadaverGames[room]
+        if game.hasPlayer(tabID) and game.isAdmin(tabID):
+            
+            game.nextTurn()
+
+        response.update({'data': game.toJSON()})
+    
+        print(game.toJSON())
+
+    emit('payload', response, to=room)
+
 
 
 
@@ -258,52 +282,19 @@ def leaveGame(message):
     except:
         callbackId = ""
 
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    response.update({'count': session['receive_count']})
-    response.update({'type':'leaveGame'})
-    response.update({'data':f'{tabID} left the room '+room})
-    response.update({'gameId': room})
-    
-    # try:
-    #     callbackId = message['callbackId']
-    # except:
-    #     callbackId = ""
+        session['receive_count'] = session.get('receive_count', 0) + 1
+        response.update({'count': session['receive_count']})
+        response.update({'origin':'leaveGame'})
+        response.update({'info':f'{tabID} left the room '+room})
 
-    # response.update({'callbackId': callbackId})
-  
-    emit('my_response', response, to=room)
+    with app.app_context():
+        game = app.cadaverGames[room]
+        response.update({'data': game.toJSON()})
+        game.leaveGame(tabID)
 
     leave_room(message['room']) # socket room
 
-    with app.app_context():
-        app.cadaverGames[room].leaveGame(tabID)
-       
-
-@socketio.on('close_room')
-def on_close_room(message):
-
-    response = {}
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    response.update({'count': session['receive_count']})
-    response.update({'data': 'Room ' + message['room'] + ' is closing.'})
-    response.update({'type':'close_room'})
-
-    close_room(message['room'])
-
-    emit('my_response', response, to=message['room'])
-
-    
-
-@socketio.event
-def my_room_event(message):
-
-    response = {}
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    response.update({'count': session['receive_count']})
-    response.update({'data': message['data']})
-    response.update({'type': 'my_room_event'})
-    
-    emit('my_response', response, to=message['room'])
+    emit('payload', response, to=room)
 
 
 @socketio.event
@@ -323,7 +314,7 @@ def disconnect_request():
     emit('my_response', response, callback=can_disconnect)
 
 @socketio.event
-def payload_request(message):
+def payload(message):
 
     room = message['room']
     response = {}
@@ -333,19 +324,15 @@ def payload_request(message):
         callbackId = ""
 
     with app.app_context():
-
-        response.update({'type':'payload'})
-        response.update({'gameId': room})
+        game = app.cadaverGames[room]
+        response.update({'origin':'payload'})
         response.update({'count': session['receive_count']})
-        response.update({'data': app.cadaverGames[room].toJSON()})
+        response.update({'data': game.toJSON()})
+        response.update({'info':'Payload for room '+room})
         response.update({'callbackId': callbackId})
 
     emit('payload', response)
 
-
-@socketio.event
-def my_ping():
-    emit('my_pong', {'type':'my_ping'})
 
 
 @socketio.event
@@ -366,14 +353,6 @@ def connect(message):
                 join_room(k)
 
 
-    response = {}
-
-    response.update({'count':0})
-    response.update({'data': 'Connected'})
-    response.update({'type': 'connect'})
-
-    print(message)
-    emit('my_response', response)
 
 
 @socketio.on('disconnect')
