@@ -434,6 +434,9 @@ def connect(message):
 
     session["tabID"] = tabID
 
+    response = {}
+    room = None
+
     #print("socketio",tabID)
 
     with app.app_context():
@@ -442,7 +445,12 @@ def connect(message):
                 print(f"Welcome back to your {k} room!",tabID)
                 join_room(k)
 
+                game = app.cadaverGames[k]
+                session["room"] = k
+                room = k
+                response.update({'data': game.toJSON()})
 
+    emit("payload", response, to=room)
 
 
 @socketio.on('disconnect')
