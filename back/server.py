@@ -211,12 +211,13 @@ def index():
 def joinGame(message):
 
     response = {}
-    room = message['room']
-    tabID = message['tabID']
+    room = session['room']
+    tabID = session["tabID"]
 
     join_room(room) # socket room
 
     session['receive_count'] = session.get('receive_count', 0) + 1
+    session["room"] = room
 
     response.update({'count': session['receive_count']})
     response.update({'origin': 'joinGame'})
@@ -246,7 +247,7 @@ def joinGame(message):
 @socketio.event
 def startGame(message):
 
-    room = message['room']
+    room = session["room"]
     response = {}
 
     response.update({'count': session['receive_count']})
@@ -268,8 +269,8 @@ def startGame(message):
 @socketio.event
 def endTurn(message):
 
-    room = message['room']
-    tabID = message['tabID']
+    room = session["room"]
+    tabID = session["tabID"]
     response = {}
 
     response.update({'count': session['receive_count']})
@@ -282,8 +283,8 @@ def endTurn(message):
 @socketio.event
 def endGame(message):
 
-    room = message['room']
-    tabID = message['tabID']
+    room = session["room"]
+    tabID = session['tabID']
     response = {}
 
     with app.app_context():
@@ -299,8 +300,8 @@ def endGame(message):
 @socketio.event
 def sendCanvas(message):
 
-    room = message['room']
-    tabID = message['tabID']
+    room = session["room"]
+    tabID = session['tabID']
     dataURI = message['dataURI']
     print(message)
     
@@ -336,8 +337,8 @@ def sendCanvas(message):
 @socketio.event
 def nextTurn(message):
 
-    room = message['room']
-    tabID = message['tabID']
+    room = session["room"]
+    tabID = session['tabID']
     response = {}
 
     response.update({'count': session['receive_count']})
@@ -365,24 +366,20 @@ def nextTurn(message):
 def leaveGame(message):
 
     response = {}
-    room = message['room']
-    tabID = message['tabID']
-    try:
-        callbackId = message['callbackId']
-    except:
-        callbackId = ""
+    room = session["room"]
+    tabID = session["tabID"]
 
-        session['receive_count'] = session.get('receive_count', 0) + 1
-        response.update({'count': session['receive_count']})
-        response.update({'origin':'leaveGame'})
-        response.update({'info':f'{tabID} left the room '+room})
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    response.update({'count': session['receive_count']})
+    response.update({'origin':'leaveGame'})
+    response.update({'info':f'{tabID} left the room '+room})
 
     with app.app_context():
         game = app.cadaverGames[room]
         response.update({'data': game.toJSON()})
         game.leaveGame(tabID)
 
-    leave_room(message['room']) # socket room
+    leave_room(room) # socket room
 
     emit('payload', response, to=room)
 
@@ -409,12 +406,8 @@ def disconnect_request():
 @socketio.event
 def payload(message):
 
-    room = message['room']
+    room = session["room"]
     response = {}
-    try:
-        callbackId = message['callbackId']
-    except:
-        callbackId = ""
 
     with app.app_context():
         game = app.cadaverGames[room]
@@ -437,6 +430,9 @@ def connect(message):
             thread = socketio.start_background_task(background_thread)
 
     tabID = request.args.get('tabID')
+
+    session["tabID"] = tabID
+    
     #print("socketio",tabID)
 
     with app.app_context():

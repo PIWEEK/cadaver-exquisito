@@ -83,15 +83,15 @@
                 return false;
             });
             $('form#leaveGame').submit(function(event) {
-                socket.emit('leaveGame', {"tabID": tabID, room: $('#leave_game').val()});
+                socket.emit('leaveGame', {"tabID": tabID});
                 return false;
             });
             $('form#startGame').submit(function(event) {
-                socket.emit('startGame', {room: $('#start_game').val()});
+                socket.emit('startGame', {});
                 return false;
             });
             $('form#nextTurn').submit(function(event) {
-                socket.emit('nextTurn', {"tabID": tabID, room: $('#next_turn').val()});
+                socket.emit('nextTurn', {"tabID": tabID});
                 return false;
             });
 
