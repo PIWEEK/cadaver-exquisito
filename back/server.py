@@ -100,7 +100,7 @@ class CadaverGame:
         # This canvas-player-turn assignment is not immediately trivial
         # For n players, we have n turns with n canvas
         # Each player gets one ordered canvas per turn so that
-        # they get distinct canvas position per drawing pero turn
+        # they get distinct canvas position per drawing per turn
         # For instance. A 3 player game will get player 1 with
         # first canvas on first drawing, 2nd on 2nd drawing and 3rd on 3rd
 
@@ -140,19 +140,6 @@ class CadaverGame:
         if len(self.waitTurnForPlayers) == 1:
             self.isLastCanvasTurn = True
         count = 0
-
-        # for p in self.players:
-        #     pdict = {}
-        #     turn = 0
-        #     for i in self.players:
-        #         if turn == 0:
-        #             pdict.update({turn: [self.drawings[count][turn],None]})
-        #         else:
-        #             pdict.update({turn: [self.drawings[count][turn],self.drawings[count][turn-1]]})
-        #         turn +=1
-        #     count += 1
-
-        #     turnsdict.update({p["playerId"]: pdict})
 
         self.canvasTurns = self.assignCanvastoPlayerTurns()
         self.status = "ongoing"
@@ -287,6 +274,7 @@ def joinGame(message):
 def startGame(message):
 
     room = session["room"]
+    playerID = session["playerID"]
     response = {}
 
     response.update({'count': session['receive_count']})
@@ -298,26 +286,30 @@ def startGame(message):
         #TODO check for existing room, raise error otherwise
 
         game = app.cadaverGames[room]
-        game.startGame()
-        response.update({'data': game.toJSON()})
+        if game.isAdmin(playerID):
+            game.startGame()
+            response.update({'data': game.toJSON()})
 
         #print(game.toJSON())
 
-    emit('payload', response, to=room)
+            emit('payload', response, to=room)
 
 @socketio.event
-def endTurn(message):
+def collectCanvas(message):
 
     room = session["room"]
     playerID = session["playerID"]
     response = {}
 
     response.update({'count': session['receive_count']})
-    response.update({'origin':'endTurn'})
-    response.update({'info': 'End turn!'})
+    response.update({'origin':'collectCanvas'})
+    response.update({'info': 'End of turn! Time to collect canvas'})
 
+    with app.app_context():
+        game = app.cadaverGames[room]
+        if game.isAdmin(playerID):
 
-    emit('endTurn', response, to=room)
+            emit('collectCanvas', response, to=room)
 
 @socketio.event
 def endGame(message):
