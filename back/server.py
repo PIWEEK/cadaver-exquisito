@@ -8,7 +8,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room, \
     close_room, rooms, disconnect
 
 
-cadaverGames = {}        
+cadaverGames = {}
 
 def generateDrawings(numPlayers):
     drawings = []
@@ -18,7 +18,7 @@ def generateDrawings(numPlayers):
             canvaslist.append(str(uuid.uuid4()))
         drawings.append(canvaslist)
     #print(drawings)
-    return drawings    
+    return drawings
 
 def generateAvatars(multiples=5):
     shape = ["S"+str(i) for i in range(13)]
@@ -79,7 +79,7 @@ class CadaverGame:
                 pExists = True
                 break
 
-        return pExists      
+        return pExists
 
     def leaveGame(self, playerId):
 
@@ -114,14 +114,14 @@ class CadaverGame:
                     pdict.update({turn: [self.drawings[count][turn],None]})
                 else:
                     pdict.update({turn: [self.drawings[count][turn],self.drawings[count][turn-1]]})
-                turn +=1 
+                turn +=1
             count += 1
 
             turnsdict.update({p["playerId"]: pdict})
-        
+
         self.canvasTurns = turnsdict
         self.status = "ongoing"
-        
+
     def receiveTurnFromPlayer(self, playerId, canvasId, canvasDataURI):
         if playerId in self.waitTurnForPlayers and canvasDataURI:
             self.canvas[canvasId] = canvasDataURI
@@ -139,12 +139,12 @@ class CadaverGame:
                 self.isLastCanvasTurn = True
         self.waitTurnForPlayers = [p["playerId"] for p in self.players]
 
-    
+
     def endGame(self):
 
         self.status = "finished"
 
-    
+
     def buildAvatars(self):
         self.avatars = generateAvatars()
 
@@ -173,8 +173,9 @@ class CadaverGame:
         return json.dumps(dir(self))
 
     def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, 
-            sort_keys=True, indent=4)
+        return self.__dict__
+        # return json.dumps(self, default=lambda o: o.__dict__,
+        #     sort_keys=True, indent=4)
 
 
 # Set this variable to "threading", "eventlet" or "gevent" to test the
@@ -211,7 +212,7 @@ def index():
 def joinGame(message):
 
     response = {}
-    room = request.args.get('room')
+    room = message['room']
     tabID = session["tabID"]
 
     join_room(room) # socket room
@@ -222,7 +223,7 @@ def joinGame(message):
     response.update({'count': session['receive_count']})
     response.update({'origin': 'joinGame'})
     response.update({'info': f'{tabID} joined game: ' + room})
-    
+
     with app.app_context():
 
         if room not in app.cadaverGames.keys():
@@ -261,7 +262,7 @@ def startGame(message):
         game = app.cadaverGames[room]
         game.startGame()
         response.update({'data': game.toJSON()})
-    
+
         #print(game.toJSON())
 
     emit('payload', response, to=room)
@@ -304,7 +305,7 @@ def sendCanvas(message):
     tabID = session['tabID']
     dataURI = message['dataURI']
     print(message)
-    
+
     session['receive_count'] = session.get('receive_count', 0) + 1
     response = {}
     response.update({'count': session['receive_count']})
@@ -332,7 +333,7 @@ def sendCanvas(message):
 
 
 
-    
+
 
 @socketio.event
 def nextTurn(message):
@@ -350,11 +351,11 @@ def nextTurn(message):
         #TODO check for existing room, raise error otherwise
         game = app.cadaverGames[room]
         if game.hasPlayer(tabID) and game.isAdmin(tabID):
-            
+
             game.nextTurn()
 
         response.update({'data': game.toJSON()})
-    
+
         #print(game.toJSON())
     print("It's time for a new turn!")
     emit('payload', response, to=room)
@@ -432,7 +433,7 @@ def connect(message):
     tabID = request.args.get('tabID')
 
     session["tabID"] = tabID
-    
+
     #print("socketio",tabID)
 
     with app.app_context():
