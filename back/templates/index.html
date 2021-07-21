@@ -91,12 +91,12 @@
                 return false;
             });
             $('form#nextTurn').submit(function(event) {
-                socket.emit('nextTurn', {room: $('#next_turn').val()});
+                socket.emit('nextTurn', {"tabID": tabID, room: $('#next_turn').val()});
                 return false;
             });
 
-            $('form#send_room').submit(function(event) {
-                socket.emit('my_room_event', {room: $('#room_name').val(), data: $('#room_data').val()});
+            $('form#send_canvas').submit(function(event) {
+                socket.emit('sendCanvas', {tabID: tabID, room: $('#send_canvas_id').val(), dataURI: $('#dataURI').val()});
                 return false;
             });
             $('form#close').submit(function(event) {
@@ -114,7 +114,7 @@
 
             
         });
-        $(document).getElementById("playerId").value = tabId;
+       // $(document).getElementById("tabID").value = tabId;
     </script>
 </head>
 <body>
@@ -148,7 +148,7 @@
 
     <form id="nextTurn" method="POST" action='#'>
         <input type="text" name="next_turn" id="next_turn" placeholder="Game Name">
-        <input type="text" name="playerId" id="playerId">
+        <input type="text" name="tabID" id="tabID">
 
         <input type="submit" value="Next Turn">
     </form>
@@ -157,10 +157,10 @@
         <input type="text" name="room_name" id="room_name" placeholder="Game Name">
         <input type="submit" value="Payload">
     </form>
-    <form id="send_room" method="POST" action='#'>
-        <input type="text" name="room_name" id="room_name" placeholder="Game Name">
-        <input type="text" name="room_data" id="room_data" placeholder="Message">
-        <input type="submit" value="Send to Game">
+    <form id="send_canvas" method="POST" action='#'>
+        <input type="text" name="send_canvas_id" id="send_canvas_id" placeholder="Game Name">
+        <input type="text" name="dataURI" id="dataURI" placeholder="dataURI">
+        <input type="submit" value="Send dataURI to Game">
     </form>
     <form id="close" method="POST" action="#">
         <input type="text" name="close_room" id="close_room" placeholder="Game Name">

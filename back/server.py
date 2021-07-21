@@ -17,7 +17,7 @@ def generateDrawings(numPlayers):
         for i in range(numPlayers):
             canvaslist.append(str(uuid.uuid4()))
         drawings.append(canvaslist)
-
+    #print(drawings)
     return drawings    
 
 def generateAvatars(multiples=5):
@@ -40,7 +40,7 @@ def generateAvatars(multiples=5):
         animations+=animation[:]
 
     avatars = list(zip(shapes, colors, animations))
-    print(avatars)
+    #print(avatars)
     return avatars
 
 
@@ -55,7 +55,9 @@ class CadaverGame:
         self.URL = URL
 
         self.players = []
-        self.canvasTurns =[]
+        self.waitTurnForPlayers = []
+        self.canvas = {}
+        self.canvasTurns = {}
         self.activeCanvasTurn = 0
         self.isLastCanvasTurn = False
         self.drawings = []
@@ -98,6 +100,10 @@ class CadaverGame:
 
         turnsdict = {}
         self.drawings = generateDrawings(len(self.players))
+        self.canvas = {uid:None for sublist in self.drawings for uid in sublist}
+        self.waitTurnForPlayers = [p["playerId"] for p in self.players]
+        if len(self.waitTurnForPlayers) == 1:
+            self.isLastCanvasTurn = True
         count = 0
 
         for p in self.players:
@@ -116,13 +122,29 @@ class CadaverGame:
         self.canvasTurns = turnsdict
         self.status = "ongoing"
         
+    def receiveTurnFromPlayer(self, playerId, canvasId, canvasDataURI):
+        if playerId in self.waitTurnForPlayers and canvasDataURI:
+            self.canvas[canvasId] = canvasDataURI
+            self.waitTurnForPlayers.remove(playerId)
+        print("waiting list", self.waitTurnForPlayers)
+
+    def allCanvasAreIn(self):
+        return (len(self.waitTurnForPlayers) == 0)
+
     def nextTurn(self):
 
         if not self.isLastCanvasTurn:
             self.activeCanvasTurn +=1
             if len(self.players) == self.activeCanvasTurn + 1:
                 self.isLastCanvasTurn = True
+        self.waitTurnForPlayers = [p["playerId"] for p in self.players]
 
+    
+    def endGame(self):
+
+        self.status = "finished"
+
+    
     def buildAvatars(self):
         self.avatars = generateAvatars()
 
@@ -216,7 +238,7 @@ def joinGame(message):
         game = app.cadaverGames[room]
         response.update({'data': game.toJSON()})
         
-        print(game.toJSON())
+        #print(game.toJSON())
 
     emit('payload', response, to=room)
 
@@ -239,9 +261,77 @@ def startGame(message):
         game.startGame()
         response.update({'data': game.toJSON()})
     
-        print(game.toJSON())
+        #print(game.toJSON())
 
     emit('payload', response, to=room)
+
+@socketio.event
+def endTurn(message):
+
+    room = message['room']
+    tabID = message['tabID']
+    response = {}
+
+    response.update({'count': session['receive_count']})
+    response.update({'origin':'endTurn'})
+    response.update({'info': 'End turn!'})
+
+
+    emit('endTurn', response, to=room)
+
+@socketio.event
+def endGame(message):
+
+    room = message['room']
+    tabID = message['tabID']
+    response = {}
+
+    with app.app_context():
+        game = app.cadaverGames[room]
+        response.update({'count': session['receive_count']})
+        response.update({'origin':'endGame'})
+        response.update({'info': 'End Game!'})
+
+        response.update({'data': game.toJSON()})
+
+    emit('payload', response, to=room)
+
+@socketio.event
+def sendCanvas(message):
+
+    room = message['room']
+    tabID = message['tabID']
+    dataURI = message['dataURI']
+    print(message)
+    
+    session['receive_count'] = session.get('receive_count', 0) + 1
+    response = {}
+    response.update({'count': session['receive_count']})
+    response.update({'origin':'sendCanvas'})
+
+    with app.app_context():
+        game = app.cadaverGames[room]
+        canvasId = game.canvasTurns[tabID][game.activeCanvasTurn][0]
+        game.receiveTurnFromPlayer(tabID, canvasId, dataURI)
+
+        if game.allCanvasAreIn() and not game.isLastCanvasTurn: #final canvas on a non final turn
+            response.update({'info': 'Yours was the last canvas!'})
+            print('Yours was the last canvas!')
+            game.nextTurn()
+            nextTurn(message)
+        elif game.allCanvasAreIn() and game.isLastCanvasTurn: #final canvas on a final turn
+            response.update({'info': 'Yours was the last canvas of the last turn!'})
+            print('Yours was the last canvas of the last turn!')
+            game.endGame()
+            endGame(message)
+        else: #any non final canvas on any turn
+            response.update({'info': 'Your canvas has been sent! Still waiting for the rest of players'})
+            print('Your canvas has been sent! Still waiting for the rest of players')
+            emit('sendCanvas', response)
+
+
+
+    
 
 @socketio.event
 def nextTurn(message):
@@ -264,8 +354,8 @@ def nextTurn(message):
 
         response.update({'data': game.toJSON()})
     
-        print(game.toJSON())
-
+        #print(game.toJSON())
+    print("It's time for a new turn!")
     emit('payload', response, to=room)
 
 
@@ -313,6 +403,9 @@ def disconnect_request():
     # received and it is safe to disconnect
     emit('my_response', response, callback=can_disconnect)
 
+
+# request del payload con room en request para recuperar en el futuro
+
 @socketio.event
 def payload(message):
 
@@ -344,7 +437,7 @@ def connect(message):
             thread = socketio.start_background_task(background_thread)
 
     tabID = request.args.get('tabID')
-    print("socketio",tabID)
+    #print("socketio",tabID)
 
     with app.app_context():
         for k, v in app.cadaverGames.items():
