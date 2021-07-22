@@ -44,7 +44,11 @@ def generateAvatars(multiples=5):
     #print(avatars)
     return avatars
 
-
+def loadFromServer(room):
+    with open(room, 'rb') as f:
+        r = f.read()
+        print json.loads(r)
+        return json.loads(r)
 
 
 class CadaverGame:
@@ -198,6 +202,14 @@ class CadaverGame:
         return self.__dict__
         # return json.dumps(self, default=lambda o: o.__dict__,
         #     sort_keys=True, indent=4)
+
+    def saveToServer(self):
+        with open(self.room, 'w') as f:
+            f.write(self.toJSON())
+
+
+
+
 
 
 # Set this variable to "threading", "eventlet" or "gevent" to test the
@@ -455,6 +467,38 @@ def payload(message):
     emit('payload', response)
 
 
+
+@socketio.event
+def saveToServer(message):
+
+    room = session["room"]
+    response = {}
+
+    with app.app_context():
+        game = app.cadaverGames[room]
+        response.update({'count': session['receive_count']})
+        response.update({'origin':'saveToServer'})
+        response.update({'info': 'Game payload saved'})
+
+    emit('saveToServer', response)
+
+
+@socketio.event
+def loadFromServer(message):
+
+    room = message['room']
+    playerID = session['playerID']
+    response = {}
+
+    with app.app_context():
+        game = app.cadaverGames[room]
+        response.update({'count': session['receive_count']})
+        response.update({'origin':'loadFromServer'})
+        response.update({'info': 'Old room payload'})
+
+        response.update({'data': loadFromServer(room)})
+
+    emit('payload', response)
 
 @socketio.event
 def connect(message):
