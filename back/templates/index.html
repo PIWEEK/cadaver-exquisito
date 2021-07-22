@@ -70,20 +70,12 @@
             // Handlers for the different forms in the page.
             // These accept data from the user and send it to the server in a
             // variety of ways
-            $('form#emit').submit(function(event) {
-                socket.emit('my_event', {data: $('#emit_data').val()});
-                return false;
-            });
-            $('form#broadcast').submit(function(event) {
-                socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
-                return false;
-            });
             $('form#joinGame').submit(function(event) {
                 socket.emit('joinGame', {"playerID": tabID, "name": "aname", room: $('#join_game').val()});
                 return false;
             });
             $('form#leaveGame').submit(function(event) {
-                socket.emit('leaveGame', {"tabID": tabID});
+                socket.emit('leaveGame',{});
                 return false;
             });
             $('form#startGame').submit(function(event) {
@@ -96,19 +88,19 @@
             });
 
             $('form#send_canvas').submit(function(event) {
-                socket.emit('sendCanvas', {tabID: tabID, room: $('#send_canvas_id').val(), dataURI: $('#dataURI').val(), canvasWidth: 2048, canvasHeight: 1000});
+                socket.emit('sendCanvas', {dataURI: $('#dataURI').val(), canvasWidth: 2048, canvasHeight: 1000});
                 return false;
             });
             $('form#close').submit(function(event) {
-                socket.emit('close_room', {room: $('#close_room').val()});
+                socket.emit('close_room',{});
                 return false;
             });
             $('form#disconnect').submit(function(event) {
-                socket.emit('disconnect_request');
+                socket.emit('disconnect_request',{});
                 return false;
             });
             $('form#payload').submit(function(event) {
-                socket.emit('payload_request', {room: $('#room_name').val()});
+                socket.emit('payload_request',{});
                 return false;
             });
             $('form#load').submit(function(event) {
@@ -140,23 +132,19 @@
         <input type="submit" value="Join Game">
     </form>
     <form id="leaveGame" method="POST" action='#'>
-        <input type="text" name="leave_game" id="leave_game" placeholder="Game Name">
         <input type="submit" value="Leave Game">
     </form>
     <form id="startGame" method="POST" action='#'>
-        <input type="text" name="start_game" id="start_game" placeholder="Game Name">
         <input type="submit" value="Start Game">
     </form>
 
     <form id="nextTurn" method="POST" action='#'>
-        <input type="text" name="next_turn" id="next_turn" placeholder="Game Name">
         <input type="text" name="tabID" id="tabID">
 
         <input type="submit" value="Next Turn">
     </form>
 
     <form id="payload" method="POST" action="#">
-        <input type="text" name="room_name" id="room_name" placeholder="Game Name">
         <input type="submit" value="Payload">
     </form>
     <form id="save" method="POST" action="#">
@@ -168,12 +156,10 @@
     </form>
 
     <form id="send_canvas" method="POST" action='#'>
-        <input type="text" name="send_canvas_id" id="send_canvas_id" placeholder="Game Name">
         <input type="text" name="dataURI" id="dataURI" placeholder="dataURI">
         <input type="submit" value="Send dataURI to Game">
     </form>
     <form id="close" method="POST" action="#">
-        <input type="text" name="close_room" id="close_room" placeholder="Game Name">
         <input type="submit" value="Close Game">
     </form>
 

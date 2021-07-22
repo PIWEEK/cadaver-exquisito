@@ -98,6 +98,40 @@ class CadaverGame:
                 newAdmin = choice(self.players)
                 self.giveAdmin(newAdmin['playerId'])
 
+    def reassignCanvasonPlayerLeave(self, playerId):
+        canvasturnforplayer = self.canvasTurns[playerId]
+        activeturn = self.activeCanvasTurn
+        lostcanvasids = []
+        parentlesscanvasids = {}
+        for turn in list(canvasturnforplayer):
+            if turn > activeturn: #to be discussed is current ongoing canvas is kept or discarded
+                lostcanvasids.append(canvasturnforplayer[turn][0])
+
+        for drawing in self.drawings:
+            for canvasid in lostcanvasids:
+                try:
+                    pos = drawing.index(canvasid)
+                    if pos != len(drawing)-1: #we don't really act much on last canvas
+                        parentlesscanvasids[drawing[pos+1]] = drawing[pos-1]
+                    drawing.pop(pos)
+                except:
+                    pass
+
+        
+        for player in self.canvasTurns:
+            if player != playerId:
+                for turn in self.canvasTurns[player]:
+                    if turn > activeturn:
+                        canvasforplayer = self.canvasTurns[player][turn][0]
+                        if canvasforplayer in parentlesscanvasids:
+                            self.canvasTurns[player][turn] = (canvasforplayer, parentlesscanvasids[canvasforplayer])
+
+        del self.canvasTurns[playerId]                    
+
+
+
+
+
     def assignCanvastoPlayerTurns(self):
 
         # This canvas-player-turn assignment is not immediately trivial
@@ -119,15 +153,15 @@ class CadaverGame:
         for p in pos:
             playerID = self.players[p]["playerId"]
             l = {}
-            for i in range(size):
-                index = (i*(size+1)+size*p)%len(canvas_list)
+            for turn in range(size):
+                index = (turn*(size+1)+size*p)%len(canvas_list)
                 c = canvas_list[index]
-                if i==0:
+                if turn==0:
                     prev_c = None
                 else:
-                    index = (i*(size+1)+size*p)%len(canvas_list)-1
+                    index = (turn*(size+1)+size*p)%len(canvas_list)-1
                     prev_c = canvas_list[index]
-                l[i] = (c,prev_c)
+                l[turn] = (c,prev_c)
             canvas_turn_dict[playerID] = l
 
         return canvas_turn_dict
@@ -430,7 +464,8 @@ def leaveGame(message):
 
         if game.status == "ongoing":
             sendCanvas(message) #before we actually leave, we send whatever canvas we have
-            
+            game.reassignCanvasonPlayerLeave(playerID)
+
     leave_room(room) # socket room
 
     emit('payload', response, to=room)
@@ -456,7 +491,7 @@ def disconnect_request():
 # request del payload con room en request para recuperar en el futuro
 
 @socketio.event
-def payload(message):
+def payload_request(message):
 
     room = session["room"]
     response = {}
@@ -467,8 +502,9 @@ def payload(message):
         response.update({'count': session['receive_count']})
         response.update({'data': game.toJSON()})
         response.update({'info':'Payload for room '+room})
-        response.update({'callbackId': callbackId})
 
+    pp.pprint(game.toJSON())
+    
     emit('payload', response)
 
 
