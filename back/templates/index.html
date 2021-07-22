@@ -96,7 +96,7 @@
             });
 
             $('form#send_canvas').submit(function(event) {
-                socket.emit('sendCanvas', {tabID: tabID, room: $('#send_canvas_id').val(), dataURI: $('#dataURI').val()});
+                socket.emit('sendCanvas', {tabID: tabID, room: $('#send_canvas_id').val(), dataURI: $('#dataURI').val(), canvasWidth: 2048, canvasHeight: 1000});
                 return false;
             });
             $('form#close').submit(function(event) {

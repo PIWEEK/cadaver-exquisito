@@ -144,9 +144,9 @@ class CadaverGame:
         self.canvasTurns = self.assignCanvastoPlayerTurns()
         self.status = "ongoing"
 
-    def receiveTurnFromPlayer(self, playerId, canvasId, canvasDataURI):
+    def receiveTurnFromPlayer(self, playerId, canvasId, canvasDataURI, canvasWidth, canvasHeight):
         if playerId in self.waitTurnForPlayers and canvasDataURI:
-            self.canvas[canvasId] = canvasDataURI
+            self.canvas[canvasId] = {"dataURI": canvasDataURI, "width": canvasWidth, "height": canvasHeight}
             self.waitTurnForPlayers.remove(playerId)
         print("waiting list", self.waitTurnForPlayers)
 
@@ -334,6 +334,8 @@ def sendCanvas(message):
     room = session["room"]
     playerID = session['playerID']
     dataURI = message['dataURI']
+    canvasWidth = message['canvasWidth']
+    canvasHeight = message['canvasHeight']
     print(message)
 
     session['receive_count'] = session.get('receive_count', 0) + 1
@@ -344,7 +346,7 @@ def sendCanvas(message):
     with app.app_context():
         game = app.cadaverGames[room]
         canvasId = game.canvasTurns[playerID][game.activeCanvasTurn][0]
-        game.receiveTurnFromPlayer(playerID, canvasId, dataURI)
+        game.receiveTurnFromPlayer(playerID, canvasId, dataURI, canvasWidth, canvasHeight)
 
         if game.allCanvasAreIn() and not game.isLastCanvasTurn: #final canvas on a non final turn
             response.update({'info': 'Yours was the last canvas!'})
