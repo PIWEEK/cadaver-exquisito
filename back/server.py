@@ -394,15 +394,18 @@ def nextTurn(message):
 
         #TODO check for existing room, raise error otherwise
         game = app.cadaverGames[room]
-        if game.hasPlayer(playerID) and game.isAdmin(playerID):
+        if game.hasPlayer(playerID) and game.isAdmin(playerID and not game.isLastCanvasTurn):
 
             game.nextTurn()
+            print("It's time for a new turn!")
+        else:
+            # Next turn is not available for some reason
+            print("Next turn is not available for some reason")
 
         response.update({'data': game.toJSON()})
 
-
         pp.pprint(game.toJSON())
-    print("It's time for a new turn!")
+    
     emit('payload', response, to=room)
 
 
