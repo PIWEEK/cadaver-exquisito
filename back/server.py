@@ -47,7 +47,7 @@ def generateAvatars(multiples=5):
 def loadFromServer(room):
     with open(room, 'rb') as f:
         r = f.read()
-        print json.loads(r)
+        
         return json.loads(r)
 
 
