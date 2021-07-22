@@ -428,6 +428,9 @@ def leaveGame(message):
         response.update({'data': game.toJSON()})
         game.leaveGame(playerID)
 
+        if game.status == "ongoing":
+            sendCanvas(message) #before we actually leave, we send whatever canvas we have
+            
     leave_room(room) # socket room
 
     emit('payload', response, to=room)
