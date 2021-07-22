@@ -8,7 +8,7 @@
   (:require
    [app.util.data :as d]
    [app.util.spec :as us]
-   [app.util.storage :refer [storage]]
+   [app.util.uuid :as uuid]
    [app.util.timers :as tm]
    [app.util.webapi :as wa]
    [beicon.core :as rx]
@@ -21,6 +21,15 @@
    [potok.core :as ptk]))
 
 (log/set-level 'app.store :info)
+
+(defn get-session-id
+  []
+  (let [current (.getItem ^js js/sessionStorage "sessionId")]
+    (or current
+        (let [id (str (uuid/random))]
+          (.setItem js/sessionStorage "sessionId" id)
+          id))))
+
 
 (defn get-initial-state
   []
@@ -53,7 +62,8 @@
                           (let [status (get game "status")
                                 params (assoc params :room (get game "room"))]
                             (cond-> params
-                              (= status "waiting") (assoc :screen "wait")
-                              (= status "ongoing") (assoc :screen "draw")))
+                              (= status "waiting")  (assoc :screen "wait")
+                              (= status "ongoing")  (assoc :screen "draw")
+                              (= status "finished") (assoc :screen "end")))
                           (assoc params :screen "start"))))
       (assoc :game game)))

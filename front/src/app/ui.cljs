@@ -11,6 +11,7 @@
    [app.ui.context :as ctx]
    [app.ui.rhooks :as rh]
    [app.ui.screens.draw :refer [draw-screen]]
+   [app.ui.screens.end :refer [end-screen]]
    [app.ui.screens.start :refer [start-screen]]
    [app.ui.screens.wait :refer [wait-screen]]
    [app.util.data :as d]
@@ -35,7 +36,7 @@
 
 (mf/defc game
   [{:keys [state]}]
-  (let [{:keys [room screen]} (:params state)]
+  (let [{:keys [room screen index]} (:params state)]
     [:div.screen {:class (str "screen-" screen)}
      (cond
        (= "start" screen)
@@ -49,6 +50,9 @@
 
            (= "draw" screen)
            [:& draw-screen {:game game}]
+
+           (= "end" screen)
+           [:& end-screen {:game game :index index}]
 
            :else
            [:span "not found"])))]))

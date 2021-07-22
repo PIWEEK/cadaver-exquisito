@@ -11,6 +11,7 @@
    [app.ui.icons :as i]
    [app.ui.avatars :refer [avatar]]
    [app.ui.context :as ctx]
+   [app.ui.common :as cm]
    [app.util.webapi :as wa]
    [app.util.websockets :as ws]
    [potok.core :as ptk]
@@ -276,7 +277,7 @@
          (when prev (draw-prev! node prev))
          (constantly nil))))
 
-    ;; (cljs.pprint/pprint (dissoc game "canvas"))
+    (cljs.pprint/pprint (dissoc game "canvas"))
 
     [:*
      (when (= @wait turn)
@@ -284,10 +285,7 @@
         [:span.message "Waiting next turn..."]])
      [:div.header]
      [:div.main-content
-      [:div.left-sidebar
-       [:div.logo [:img {:src "/images/logo.svg"}]]
-       [:div.connection-status]
-       [:div.spacer]
+      [:& cm/left-sidebar {}
        [:div.draw-buttons
         [:div.button.finish-turn
          {:on-click finish-turn

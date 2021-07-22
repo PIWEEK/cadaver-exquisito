@@ -10,12 +10,21 @@
    [app.ui.context :as ctx]
    [app.ui.icons :as i]
    [app.ui.avatars :refer [avatar]]
+   [app.ui.common :as cm]
    [app.util.data :as d]
    [app.util.webapi :as wa]
    [app.util.websockets :as ws]
    [lambdaisland.uri :as u]
    [potok.core :as ptk]
    [rumext.alpha :as mf]))
+
+(defn- build-share-link
+  [room]
+  (let [query (u/map->query-string {:room room :screen "start"})]
+    (-> (wa/get-current-uri)
+        (assoc :query query)
+        (str))))
+
 
 (mf/defc wait-screen
   [{:keys [game]}]
@@ -38,11 +47,23 @@
         (fn []
           (let [socket (:socket wsock)]
             (reset! waiting true)
-            (ws/send! socket "startGame" {})))]
+            (ws/send! socket "startGame" {})))
 
-    (if (true? @waiting)
-      [:div.notice "joining game...."]
-      [:*
+        slink (build-share-link room)
+
+        on-copy-link
+        (fn [event]
+          (wa/prevent-default! event)
+          (when-let [clipboard (unchecked-get js/navigator "clipboard")]
+            (.writeText ^js clipboard slink)))]
+
+    [:*
+     (when (true? @waiting)
+      [:div.notice-overlay "joining game...."])
+
+     [:div.main-content
+      [:& cm/left-sidebar {}]
+      [:div.main-panel
        [:div.profile
         [:div.avatar [:& avatar {:profile profile}]]
         [:div.greetings (str "Hi " (get profile "name") "!")]
@@ -57,18 +78,15 @@
           (when (not= (get player "playerId") session-id)
             [:div.participant {:key (get player "playerId")}
              [:div.avatar [:& avatar {:profile player}]]
-             [:div.label (get player "name")]]))]
+             [:div.label (get player "name")]]))]]
 
-       (when is-admin?
-         (let [query (u/map->query-string {:room room :screen "start"})
-               href (-> (wa/get-current-uri)
-                        (assoc :query query))]
-
-           [:div.share-link
-            [:div.share-link-container
-             [:div.label "Share it with friends!"]
-             [:div.circle-button
-              [:a.label {:href (str href)} "Copy link"]]]]))])))
+      [:div.share-link
+       [:div.share-link-container
+        [:div.label "Share it with friends!"]
+        [:div.circle-button
+         [:a.label {:href slink
+                    :on-click on-copy-link}
+          "Copy link"]]]]]]))
 
 
 
