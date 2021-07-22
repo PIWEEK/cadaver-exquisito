@@ -208,8 +208,7 @@ async_mode = "eventlet"
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1024*1024*50
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode=async_mode, manage_session=True, max_http_buffer_size=1024*1024*50,
-                    transports=["websockets"])
+socketio = SocketIO(app, async_mode=async_mode, manage_session=True, max_http_buffer_size=1024*1024*50)
 thread = None
 thread_lock = Lock()
 
