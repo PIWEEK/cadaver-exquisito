@@ -457,31 +457,34 @@ def nextTurn(message):
 def leaveGame(message, unexpected=False):
 
     response = {}
-    room = session["room"]
-    playerID = session["playerID"]
-    unexpected = unexpected
+    try:
+        room = session["room"]
+        playerID = session["playerID"]
+        unexpected = unexpected
 
-    session['receive_count'] = session.get('receive_count', 0) + 1
-    response.update({'count': session['receive_count']})
-    response.update({'origin':'leaveGame'})
-    response.update({'info':f'{playerID} left the room '+room})
+        session['receive_count'] = session.get('receive_count', 0) + 1
+        response.update({'count': session['receive_count']})
+        response.update({'origin':'leaveGame'})
+        response.update({'info':f'{playerID} left the room '+room})
 
-    with app.app_context():
-        game = app.cadaverGames[room]
-        response.update({'data': game.toJSON()})
-        game.leaveGame(playerID)
+        with app.app_context():
+            game = app.cadaverGames[room]
+            response.update({'data': game.toJSON()})
+            game.leaveGame(playerID)
 
-        if game.status == "ongoing":
-            if (unexpected==False):
-                sendCanvas(message) #before we actually leave, we send whatever canvas we have
-            else:
-                sendEmergencyCanvas(message)
-            game.reassignCanvasonPlayerLeave(playerID)
+            if game.status == "ongoing":
+                if (unexpected==False):
+                    sendCanvas(message) #before we actually leave, we send whatever canvas we have
+                else:
+                    sendEmergencyCanvas(message)
+                game.reassignCanvasonPlayerLeave(playerID)
 
-    leave_room(room) # socket room
+        leave_room(room) # socket room
 
-    emit('payload', response, to=room)
+        emit('payload', response, to=room)
 
+    except:
+        pass #this leaveGame came from someone not even in a room
 
 @socketio.event
 def disconnect_request():
