@@ -21,7 +21,7 @@
   [session-id]
   (let [socket (io #js {:query #js {:playerID session-id}
                         ;; :path "/api/socket.io"
-                        ;; :transports #js ["polling"]
+                        :transports #js ["websocket"]
                         })]
     socket))
 

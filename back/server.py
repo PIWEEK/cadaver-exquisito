@@ -109,7 +109,7 @@ class CadaverGame:
         size = len(self.players)
 
         canvas_list = [canvas for sublist in drawings for canvas in sublist]
-        
+
         pos = range(size)
         canvas_turn_dict = {}
 
@@ -128,7 +128,7 @@ class CadaverGame:
             canvas_turn_dict[playerID] = l
 
         return canvas_turn_dict
-                  
+
 
 
     def startGame(self):
@@ -203,11 +203,13 @@ class CadaverGame:
 # Set this variable to "threading", "eventlet" or "gevent" to test the
 # different async modes, or leave it set to None for the application to choose
 # the best option based on installed packages.
-async_mode = None
+async_mode = "eventlet"
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 1024*1024*50
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, async_mode=async_mode, manage_session=True)
+socketio = SocketIO(app, async_mode=async_mode, manage_session=True, max_http_buffer_size=1024*1024*50,
+                    transports=["websockets"])
 thread = None
 thread_lock = Lock()
 
@@ -388,7 +390,7 @@ def nextTurn(message):
 
         response.update({'data': game.toJSON()})
 
-        
+
         pp.pprint(game.toJSON())
     print("It's time for a new turn!")
     emit('payload', response, to=room)

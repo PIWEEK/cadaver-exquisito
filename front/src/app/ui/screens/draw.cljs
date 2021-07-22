@@ -11,7 +11,7 @@
    [app.ui.icons :as i]
    [app.ui.avatars :refer [avatar]]
    [app.ui.context :as ctx]
-   [cljs.core.async :as a]
+   [app.util.websockets :as ws]
    [potok.core :as ptk]
    [goog.events :as gev]
    [rumext.alpha :as mf]))
@@ -180,9 +180,14 @@
                 imgdh   (- cheight cropf)
 
                 imgd    (.getImageData ctx 0 cropf imgdw imgdh)
-                duri    (image-data->data-uri imgd imgdw imgdh)]
+                duri    (image-data->data-uri imgd imgdw imgdh)
 
-            (js/console.log duri)))
+                socket  (:socket wsock)]
+            (reset! wait turn)
+            (ws/send! socket "sendCanvas" {:room (get game "room")
+                                           :dataURI duri
+                                           :canvasWidth imgdw
+                                           :canvasHeight imgdh})))
         ]
     (mf/use-effect
      (fn []
@@ -192,17 +197,10 @@
     (mf/use-effect
      (mf/deps turn)
      (fn []
-       (let [cch (a/chan 1)]
-         (a/go
-           (let [[msg port] (a/alts! [msgbus cch])]
-             (when (= port msgbus)
-               (reset! wait turn))))
+       (clean-drawing! (mf/ref-val canvas))
+       (constantly nil)))
 
-         (clean-drawing! (mf/ref-val canvas))
-         (fn []
-           (a/close! cch)))))
-
-    (cljs.pprint/pprint players)
+    ;; (cljs.pprint/pprint players)
 
     [:*
      (when @wait

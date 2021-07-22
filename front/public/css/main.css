@@ -139,6 +139,7 @@ main > .message .content .icon {
 }
 
 .notice-overlay {
+  z-index: 1000;
   color: white;
   background-color: black;
   font-size: 3vh;
