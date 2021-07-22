@@ -111,8 +111,13 @@
                 socket.emit('payload_request', {room: $('#room_name').val()});
                 return false;
             });
+            $('form#load').submit(function(event) {
+                socket.emit('loadFromServer', {room: $('#load_room').val()});
+                return false;
+            });
+
             $('form#save').submit(function(event) {
-                socket.emit('saveToServer');
+                socket.emit('saveToServer',{});
                 return false;
             });
 
@@ -156,6 +161,10 @@
     </form>
     <form id="save" method="POST" action="#">
         <input type="submit" value="Save Room">
+    </form>
+    <form id="load" method="POST" action='#'>
+        <input type="text" name="load_room" id="load_room" placeholder="Game Name">
+        <input type="submit" value="Recover Game">
     </form>
 
     <form id="send_canvas" method="POST" action='#'>

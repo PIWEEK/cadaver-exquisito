@@ -44,10 +44,9 @@ def generateAvatars(multiples=5):
     #print(avatars)
     return avatars
 
-def loadFromServer(room):
-    with open(room, 'rb') as f:
+def loadFromStorage(room):
+    with open(room, 'r') as f:
         r = f.read()
-        
         return json.loads(r)
 
 
@@ -205,7 +204,7 @@ class CadaverGame:
 
     def saveToServer(self):
         with open(self.room, 'w') as f:
-            f.write(self.toJSON())
+            f.write(json.dumps(self.toJSON()))
 
 
 
@@ -480,23 +479,19 @@ def saveToServer(message):
         response.update({'origin':'saveToServer'})
         response.update({'info': 'Game payload saved'})
 
-    emit('saveToServer', response)
+        game.saveToServer()
 
 
 @socketio.event
 def loadFromServer(message):
 
+    print("message=",message)
     room = message['room']
-    playerID = session['playerID']
     response = {}
 
-    with app.app_context():
-        game = app.cadaverGames[room]
-        response.update({'count': session['receive_count']})
-        response.update({'origin':'loadFromServer'})
-        response.update({'info': 'Old room payload'})
-
-        response.update({'data': loadFromServer(room)})
+    response.update({'origin':'loadFromServer'})
+    response.update({'info': 'Old room payload'})
+    response.update({'data': loadFromStorage(room)})
 
     emit('payload', response)
 
