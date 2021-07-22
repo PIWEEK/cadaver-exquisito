@@ -7,7 +7,9 @@
 (ns app.ui.screens.draw
   (:require
    [app.store :as st]
+   [app.util.data :as d]
    [app.ui.icons :as i]
+   [app.ui.avatars :refer [avatar]]
    [app.ui.context :as ctx]
    [cljs.core.async :as a]
    [potok.core :as ptk]
@@ -17,8 +19,8 @@
 (def ^:const default-canvas-width 2048)
 
 (defn draw-line!
-  [ctx scale x1 y1 x2 y2]
-  (set! (.-strokeStyle ^js ctx) "black")
+  [ctx scale color x1 y1 x2 y2]
+  (set! (.-strokeStyle ^js ctx) color)
   (set! (.-lineCap ^js ctx) "round")
   (set! (.-lineWidth ^js ctx) 12)
 
@@ -34,7 +36,7 @@
     (.closePath ^js ctx)))
 
 (defn initialize!
-  [node]
+  [node dtool]
   (let [parent  (.-parentNode ^js node)
         ctx     (.getContext ^js node "2d")
 
@@ -62,14 +64,14 @@
           (when @drawing
             (let [[x1 y1] @origin
                   x2      (.-offsetX ^js event)
-                  y2      (.-offsetY ^js event)]
-              (draw-line! ctx scale x1 y1 x2 y2)
+                  y2      (.-offsetY ^js event)
+                  color   (if (= :pencil (mf/ref-val dtool)) "black" "white")]
+              (draw-line! ctx scale color x1 y1 x2 y2)
               (vreset! origin [x2 y2]))))
 
         on-mouse-up
         (fn [event]
-          (vreset! drawing false)
-          (prn "on-mouse-up"))
+          (vreset! drawing false))
 
         get-touch-pos
         (fn [touch]
@@ -83,7 +85,6 @@
 
         on-touch-start
         (fn [event]
-          (prn "on-touch-start")
           (let [event   (.getBrowserEvent ^js event)
                 touches (.-changedTouches event)]
             (when (pos? (alength touches))
@@ -95,24 +96,22 @@
 
         on-touch-move
         (fn [event]
-          (prn "on-touch-move")
           (let [event   (.getBrowserEvent ^js event)
                 touches (.-changedTouches event)]
             (when (pos? (alength touches))
-
-
               (let [touch   (aget touches 0)
                     [x2 y2] (get-touch-pos touch)
                     tid     (.-identifier ^js touch)
 
-                    [x1 y1] @origin]
+                    [x1 y1] @origin
 
-                (draw-line! ctx scale x1 y1 x2 y2)
+                    color   (if (= :pencil (mf/ref-val dtool)) "black" "white")]
+
+                (draw-line! ctx scale color x1 y1 x2 y2)
                 (vreset! origin [x2 y2])))))
 
         on-touch-end
         (fn [event]
-          (prn "on-mouse-end")
           (vreset! drawing false))
 
         keys [(gev/listen node "mousedown" on-mouse-down)
@@ -122,7 +121,6 @@
               (gev/listen node "touchmove" on-touch-move)
               (gev/listen node "touchend" on-touch-end)]]
 
-
     (set! (.-width node) cwidth)
     (set! (.-height node) cheight)
 
@@ -130,6 +128,14 @@
       (doseq [key keys]
         (gev/unlistenByKey key)))))
 
+(defn- image-data->data-uri
+  [imgd width height]
+  (let [canvas (.createElement ^js js/document "canvas")
+        _      (set! (.-width canvas) width)
+        _      (set! (.-height canvas) height)
+        ctx    (.getContext ^js canvas "2d")]
+    (.putImageData ctx imgd 0 0)
+    (.toDataURL canvas "image/png")))
 
 (defn- clean-drawing!
   [node]
@@ -139,20 +145,53 @@
 (mf/defc draw-screen
   {::mf/wrap [mf/memo]}
   [{:keys [game]}]
-  (let [canvas (mf/use-ref)
-        msgbus (mf/use-ctx ctx/msgbus)
+  (let [session-id (mf/use-ctx ctx/session-id)
+        wsock      (mf/use-ctx ctx/wsocket)
+        msgbus     (mf/use-ctx ctx/msgbus)
 
-        turn   (get game "activeCanvasTurn")
-        last?  (get game "isLastCanvasTurn")
-        wait   (mf/use-state nil)]
+        canvas     (mf/use-ref)
 
+        turn       (get game "activeCanvasTurn")
+        last?      (get game "isLastCanvasTurn")
+        players    (get game "players")
+
+        player     (d/seek #(= session-id (get % "playerId")) players)
+
+        wait       (mf/use-state nil)
+        dtool      (mf/use-state :pencil)
+        dtool*     (mf/use-ref :pencil)
+
+        select-drawtool
+        (fn [tool]
+          (mf/set-ref-val! dtool* tool)
+          (reset! dtool tool))
+
+        finish-turn
+        (fn [event]
+          (let [node    (mf/ref-val canvas)
+                ctx     (.getContext ^js node "2d")
+
+                cropf   (if (= turn 0) 0 50)
+
+                cwidth  (.-width ^js node)
+                cheight (.-height ^js node)
+
+                imgdw   cwidth
+                imgdh   (- cheight cropf)
+
+                imgd    (.getImageData ctx 0 cropf imgdw imgdh)
+                duri    (image-data->data-uri imgd imgdw imgdh)]
+
+            (js/console.log duri)))
+        ]
     (mf/use-effect
-     #(initialize! (mf/ref-val canvas)))
+     (fn []
+       (let [node (mf/ref-val canvas)]
+         (initialize! node dtool*))))
 
     (mf/use-effect
      (mf/deps turn)
      (fn []
-       (prn "initialize turn" turn)
        (let [cch (a/chan 1)]
          (a/go
            (let [[msg port] (a/alts! [msgbus cch])]
@@ -163,7 +202,7 @@
          (fn []
            (a/close! cch)))))
 
-    (cljs.pprint/pprint game)
+    (cljs.pprint/pprint players)
 
     [:*
      (when @wait
@@ -171,12 +210,37 @@
         [:span.message "Waiting next turn..."]])
      [:div.header]
      [:div.main-content
-      [:div.left-sidebar]
+      [:div.left-sidebar
+       [:div.logo [:img {:src "/images/logo.svg"}]]
+       [:div.connection-status]
+       [:div.spacer]
+       [:div.draw-buttons
+        [:div.button.finish-turn
+         {:on-click finish-turn
+          :title "Finish turn"}]
+        [:div.button {:class (when (= @dtool :pencil) "selected")
+                      :on-click #(select-drawtool :pencil)}
+         [:& i/lapiz]]
+        [:div.button {:class (when (= @dtool :erraser) "selected")
+                      :on-click #(select-drawtool :erraser)}
+         [:& i/goma]]]]
       [:div.main-panel
        [:div.draw-panel
         [:canvas {:ref canvas}]
         [:div.top-overlay {:style {:height "50px"}}]
         [:div.bottom-overlay {:style {:height "50px"}}]]]
-      [:div.right-sidebar]]
+      [:div.right-sidebar
+       [:div.participants
+        (for [player players]
+          (when (not= (get player "playerId") session-id)
+            [:div.participant {:key (get player "playerId")}
+             [:div.avatar [:& avatar {:profile player}]]
+             #_[:div.label (get player "name")]]))
+
+        [:div.participant
+         [:div.avatar [:& avatar {:profile player}]]]]
+
+       [:div.greetings
+        (str "Hi " (get player "name"))]]]
      [:div.footer]]))
 

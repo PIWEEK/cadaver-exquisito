@@ -219,22 +219,98 @@ main > .message .content .icon {
 }
 
 .screen .left-sidebar {
-  width: 3vw;
   /* outline: 1px solid white; */
+  width: 6vw;
+  align-items: center;
+  justify-content: space-between;
+  display: flex;
+  flex-direction: column;
 }
-/* .screen .left-sidebar .hname { */
-/*   transform: translate(-11vw, 80px) rotate(270deg); */
-/*   padding: 0px 10px; */
-/*   width: 140px; */
-/*   font-size: 2vw; */
-/*   line-height: 100%; */
-/*   /\* outline: 1px solid red; *\/ */
-/* } */
+
+.screen .left-sidebar .logo {
+  /* outline: 1px solid red; */
+  padding: 1vw 0vh;
+}
+.screen .left-sidebar .logo > img {
+  width: 2vw;
+}
+
+.screen .left-sidebar .draw-buttons {
+  /* outline: 1px solid red; */
+}
+
+.screen .left-sidebar .draw-buttons .finish-turn {
+  background: yellow;
+}
+
+
+.screen .left-sidebar .spacer {
+  flex-grow: 1;
+}
+
+.screen .left-sidebar .connection-status {
+  width: 1vw;
+  height: 1vw;
+  background: green;
+  border: 1px solid green;
+  border-radius: 2vw;
+}
+
+.screen .left-sidebar .draw-buttons .button {
+  width: 3vw;
+  height: 3vw;
+  padding: unset;
+  margin: 3vh 0vh;
+}
+
+.screen .left-sidebar .draw-buttons .button.selected {
+  background: #FFA841;
+  border: 1px solid #FFA841;
+  border-radius: 3vw;
+}
+
+.screen .left-sidebar .draw-buttons svg {
+  fill: white;
+  width: 100%;
+  height: 100%;
+}
 
 .screen .right-sidebar {
   /* outline: 1px solid green; */
   width: 12vw;
 }
+
+.screen .right-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.screen .right-sidebar .participants {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1vw 0vh;
+}
+
+.screen .right-sidebar .participants .player-avatar {
+  width: 6vw;
+  height: 4vw;
+}
+
+
+.screen .right-sidebar .greetings {
+  /* outline: 1px solid red; */
+  display: flex;
+  justify-content: center;
+  padding: 1vh 0vh;
+}
+
+
+
+
+
 
 /* --- START SCREEN --- */
 

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -ex;
+
+yarn;
+rm -rf ./dist;
+rsync -avr --exclude "js/*" ./public/ ./dist/;
+npx shadow-cljs release main;
+
+set +x;
+echo "The bundle is ready under ./dist directory."

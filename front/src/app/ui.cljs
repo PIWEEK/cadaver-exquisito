@@ -6,23 +6,22 @@
 
 (ns app.ui
   (:require
-   [lambdaisland.uri :as u]
-   [cljs.core.async :as a]
    [app.config :as cf]
-   [app.events]
    [app.store :as st]
-   [app.util.uuid :as uuid]
-   [app.util.spec :as us]
-   [app.util.data :as d]
-   [app.util.webapi :as wa]
    [app.ui.context :as ctx]
+   [app.ui.rhooks :as rh]
+   [app.ui.screens.draw :refer [draw-screen]]
    [app.ui.screens.start :refer [start-screen]]
    [app.ui.screens.wait :refer [wait-screen]]
-   [app.ui.screens.draw :refer [draw-screen]]
-   [app.ui.rhooks :as rh]
+   [app.util.data :as d]
+   [app.util.spec :as us]
+   [app.util.uuid :as uuid]
+   [app.util.webapi :as wa]
    [app.util.websockets :as ws]
+   [cljs.core.async :as a]
    [cuerdas.core :as str]
    [goog.events :as events]
+   [lambdaisland.uri :as u]
    [potok.core :as ptk]
    [rumext.alpha :as mf]))
 

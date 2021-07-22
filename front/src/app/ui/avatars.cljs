@@ -72,7 +72,11 @@
         y  (/ (* (+ cy fh) 100) wh)
 
         s1 (.-style (mf/ref-val ball-ref-1))
-        s2 (.-style (mf/ref-val ball-ref-2))]
+        s2 (.-style (mf/ref-val ball-ref-2))
+
+        f  15
+        x  (if (<= x f) f x)
+        y  (if (<= y f) f y)]
 
     (set! (.-left s1) (str x "%"))
     (set! (.-top s1) (str y "%"))

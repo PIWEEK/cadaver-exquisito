@@ -35,7 +35,8 @@
     :output-wrapper false}
 
    :release
-   {:compiler-options
+   {:output-dir "./dist/js/"
+    :compiler-options
     {:fn-invoke-direct true
      :optimizations :simple
      :source-map true

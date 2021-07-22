@@ -7,13 +7,13 @@
 (ns app.util.spec
   "Data manipulation and query helper functions."
   (:refer-clojure :exclude [assert])
-  #?(:cljs (:require-macros [app.util.spec]))
+  ;; #?(:cljs (:require-macros [app.util.spec]))
   (:require
    #?(:clj  [clojure.spec.alpha :as s]
       :cljs [cljs.spec.alpha :as s])
    [expound.alpha :as expound]
    [app.util.data :as d]
-   [app.util.exceptions :as ex]
+   [app.util.exceptions :as ex :include-macros true]
    [cuerdas.core :as str]))
 
 (s/check-asserts true)
@@ -64,7 +64,7 @@
             :else        ::s/invalid))
 
         (unformer [v]
-          (d/name v))]
+          (name v))]
   (s/def ::keyword (s/conformer conformer unformer)))
 
 
@@ -77,7 +77,7 @@
             (set? v)    (into #{} (filter keyword?) v)
             :else       ::s/invalid))
         (unformer [v]
-          (into #{} (map d/name) v))]
+          (into #{} (map name) v))]
   (s/def ::set-of-kw (s/conformer conformer unformer)))
 
 ;; --- SPEC: set-of-str
@@ -117,30 +117,30 @@
                 #?@(:cljs [:stack (.-stack (ex-info message {}))])))))
 
 
-(defmacro assert
-  "Development only assertion macro."
-  [spec x]
-  (when *assert*
-    (let [nsdata  (:ns &env)
-          context (when nsdata
-                    {:ns (str (:name nsdata))
-                     :name (pr-str spec)
-                     :line (:line &env)
-                     :file (:file (:meta nsdata))})
-          message (str "Spec Assertion: '" (pr-str spec) "'")]
-      `(spec-assert* ~spec ~x ~message ~context))))
+;; (defmacro assert
+;;   "Development only assertion macro."
+;;   [spec x]
+;;   (when *assert*
+;;     (let [nsdata  (:ns &env)
+;;           context (when nsdata
+;;                     {:ns (str (:name nsdata))
+;;                      :name (pr-str spec)
+;;                      :line (:line &env)
+;;                      :file (:file (:meta nsdata))})
+;;           message (str "Spec Assertion: '" (pr-str spec) "'")]
+;;       `(spec-assert* ~spec ~x ~message ~context))))
 
-(defmacro verify
-  "Always active assertion macro (does not obey to :elide-asserts)"
-  [spec x]
-  (let [nsdata  (:ns &env)
-        context (when nsdata
-                  {:ns (str (:name nsdata))
-                   :name (pr-str spec)
-                   :line (:line &env)
-                   :file (:file (:meta nsdata))})
-        message (str "Spec Assertion: '" (pr-str spec) "'")]
-    `(spec-assert* ~spec ~x ~message ~context)))
+;; (defmacro verify
+;;   "Always active assertion macro (does not obey to :elide-asserts)"
+;;   [spec x]
+;;   (let [nsdata  (:ns &env)
+;;         context (when nsdata
+;;                   {:ns (str (:name nsdata))
+;;                    :name (pr-str spec)
+;;                    :line (:line &env)
+;;                    :file (:file (:meta nsdata))})
+;;         message (str "Spec Assertion: '" (pr-str spec) "'")]
+;;     `(spec-assert* ~spec ~x ~message ~context)))
 
 ;; --- Public Api
 
@@ -156,14 +156,3 @@
                          :explain explain
                          :data data))))
     result))
-
-(defmacro instrument!
-  [& {:keys [sym spec]}]
-  (when *assert*
-    (let [message (str "Spec failed on: " sym)]
-      `(let [origf# ~sym
-             mdata# (meta (var ~sym))]
-         (set! ~sym (fn [& params#]
-                      (spec-assert* ~spec params# ~message mdata#)
-                      (apply origf# params#)))))))
-
