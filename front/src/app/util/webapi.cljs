@@ -79,3 +79,9 @@
   (if (is-portrait? js/window)
     :portrait
     :landscape))
+
+(defn capture-pointer [event]
+  (-> event get-target (.setPointerCapture (.-pointerId event))))
+
+(defn release-pointer [event]
+  (-> event get-target (.releasePointerCapture (.-pointerId event))))

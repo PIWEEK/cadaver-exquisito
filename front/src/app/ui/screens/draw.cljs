@@ -11,12 +11,14 @@
    [app.ui.icons :as i]
    [app.ui.avatars :refer [avatar]]
    [app.ui.context :as ctx]
+   [app.util.webapi :as wa]
    [app.util.websockets :as ws]
    [potok.core :as ptk]
    [goog.events :as gev]
    [rumext.alpha :as mf]))
 
 (def ^:const default-canvas-width 2048)
+(def ^:const default-crop-height 100)
 
 (defn draw-line!
   [ctx scale color x1 y1 x2 y2]
@@ -35,25 +37,50 @@
     (.fill ^js ctx)
     (.closePath ^js ctx)))
 
+(defn calculate-size
+  [node]
+  (let [parent    (.-parentNode ^js node)
+        ctx       (.getContext ^js node "2d")
+
+        width     (.-clientWidth ^js parent)
+        height    (.-clientHeight ^js parent)
+
+        ratio     (/ height width)
+        scale     (/ default-canvas-width width)
+
+        canvas-w  default-canvas-width
+        canvas-h  (js/Math.round (* canvas-w ratio))]
+    {:width width
+     :height height
+     :ratio ratio
+     :scale scale
+     :canvas-w canvas-w
+     :canvas-h canvas-h}))
+
+(declare clean-drawing!)
+(declare draw-prev!)
+
 (defn initialize!
   [node dtool]
-  (let [parent  (.-parentNode ^js node)
-        ctx     (.getContext ^js node "2d")
+  (let [parent    (.-parentNode ^js node)
+        ctx       (.getContext ^js node "2d")
 
-        width   (.-clientWidth ^js parent)
-        height  (.-clientHeight ^js parent)
-        ratio   (/ height width)
+        width     (.-clientWidth ^js parent)
+        height    (.-clientHeight ^js parent)
 
-        cwidth  default-canvas-width
-        cheight (js/Math.round (* cwidth ratio))
+        ratio     (/ height width)
+        scale     (/ default-canvas-width width)
 
-        drawing (volatile! false)
-        origin  (volatile! [0 0])
+        canvas-w  default-canvas-width
+        canvas-h  (js/Math.round (* canvas-w ratio))
 
-        scale   (/ default-canvas-width width)
+        drawing   (volatile! false)
+        origin    (volatile! [0 0])
 
         on-mouse-down
         (fn [event]
+          (js/console.log "mouse-down" event)
+
           (let [x     (.-offsetX ^js event)
                 y     (.-offsetY ^js event)]
             (vreset! drawing true)
@@ -71,6 +98,7 @@
 
         on-mouse-up
         (fn [event]
+          (js/console.log "mouse-up" event)
           (vreset! drawing false))
 
         get-touch-pos
@@ -115,14 +143,17 @@
           (vreset! drawing false))
 
         keys [(gev/listen node "mousedown" on-mouse-down)
+              (gev/listen node "pointerdown" wa/capture-pointer)
+              (gev/listen node "pointerup" wa/release-pointer)
               (gev/listen node "mousemove" on-mouse-move)
               (gev/listen node "mouseup" on-mouse-up)
               (gev/listen node "touchstart" on-touch-start)
               (gev/listen node "touchmove" on-touch-move)
-              (gev/listen node "touchend" on-touch-end)]]
+              (gev/listen node "touchend" on-touch-end)]
+        ]
 
-    (set! (.-width node) cwidth)
-    (set! (.-height node) cheight)
+    (set! (.-width node) canvas-w)
+    (set! (.-height node) canvas-h)
 
     (fn []
       (doseq [key keys]
@@ -136,6 +167,44 @@
         ctx    (.getContext ^js canvas "2d")]
     (.putImageData ctx imgd 0 0)
     (.toDataURL canvas "image/png")))
+
+(defn- draw-prev!
+  [node prev]
+  (let [crop-h  default-crop-height
+
+        ctx     (.getContext ^js node "2d")
+        duri    (get prev "dataURI")
+        img-w   (get prev "width")
+        img-h   (get prev "height")
+        image   (js/Image.)
+
+        sx      0
+        sy      (- img-h crop-h)
+        swidth  img-w
+        sheight crop-h]
+
+    (set! (.-src image) duri)
+    (set! (.-width image) img-w)
+    (set! (.-height image) img-h)
+
+    (.addEventListener ^js image "load" #(.drawImage ctx image sx sy swidth sheight 0 0 img-w crop-h))))
+
+(defn- extract-image-data
+  [node turn]
+  (let [ctx      (.getContext ^js node "2d")
+        crop-h   (if (= turn 0) 0 100)
+
+        canvas-w (.-width ^js node)
+        canvas-h (.-height ^js node)
+
+        img-w    canvas-w
+        img-h    (- canvas-h crop-h)
+
+        img      (.getImageData ctx 0 crop-h img-w img-h)]
+
+    {:data-uri (image-data->data-uri img img-w img-h)
+     :width img-w
+     :height img-h}))
 
 (defn- clean-drawing!
   [node]
@@ -157,53 +226,60 @@
 
         player     (d/seek #(= session-id (get % "playerId")) players)
 
+        render-cnt (mf/use-state 0)
         wait       (mf/use-state nil)
-        dtool      (mf/use-state :pencil)
-        dtool*     (mf/use-ref :pencil)
+        dtool      (mf/use-ref :pencil)
+
+        crop-h    (mf/use-state 100)
 
         select-drawtool
         (fn [tool]
-          (mf/set-ref-val! dtool* tool)
-          (reset! dtool tool))
+          (mf/set-ref-val! dtool tool)
+          (swap! render-cnt inc))
 
         finish-turn
-        (fn [event]
-          (let [node    (mf/ref-val canvas)
-                ctx     (.getContext ^js node "2d")
+        (mf/use-callback
+         (mf/deps turn wsock)
+         (fn [event]
+           (let [node    (mf/ref-val canvas)
+                 imgd    (extract-image-data node turn)
+                 socket  (:socket wsock)
+                 params  {:room (get game "room")
+                          :dataURI (:data-uri imgd)
+                          :canvasWidth (:width imgd)
+                          :canvasHeight (:height imgd)}]
 
-                cropf   (if (= turn 0) 0 50)
-
-                cwidth  (.-width ^js node)
-                cheight (.-height ^js node)
-
-                imgdw   cwidth
-                imgdh   (- cheight cropf)
-
-                imgd    (.getImageData ctx 0 cropf imgdw imgdh)
-                duri    (image-data->data-uri imgd imgdw imgdh)
-
-                socket  (:socket wsock)]
-            (reset! wait turn)
-            (ws/send! socket "sendCanvas" {:room (get game "room")
-                                           :dataURI duri
-                                           :canvasWidth imgdw
-                                           :canvasHeight imgdh})))
+             (reset! wait turn)
+             (ws/send! socket "sendCanvas" params))))
         ]
-    (mf/use-effect
-     (fn []
-       (let [node (mf/ref-val canvas)]
-         (initialize! node dtool*))))
+
+    (mf/use-layout-effect
+     #(let [node (mf/ref-val canvas)]
+        (initialize! node dtool)))
 
     (mf/use-effect
+     (mf/deps game)
+     #(let [node      (mf/ref-val canvas)
+            parent    (.-parentNode ^js node)
+            width     (.-clientWidth ^js parent)
+            scale     (/ default-canvas-width width)]
+        (compare-and-set! crop-h 100 (/ 100 scale))))
+
+    (mf/use-layout-effect
      (mf/deps turn)
      (fn []
-       (clean-drawing! (mf/ref-val canvas))
-       (constantly nil)))
+       (let [turn     (str (get game "activeCanvasTurn"))
+             prev-idx (get-in game ["canvasTurns" session-id turn 1])
+             prev     (get-in game ["canvas" prev-idx])
+             node     (mf/ref-val canvas)]
+         (clean-drawing! node)
+         (when prev (draw-prev! node prev))
+         (constantly nil))))
 
-    ;; (cljs.pprint/pprint players)
+    ;; (cljs.pprint/pprint (dissoc game "canvas"))
 
     [:*
-     (when @wait
+     (when (= @wait turn)
        [:div.notice-overlay
         [:span.message "Waiting next turn..."]])
      [:div.header]
@@ -216,17 +292,20 @@
         [:div.button.finish-turn
          {:on-click finish-turn
           :title "Finish turn"}]
-        [:div.button {:class (when (= @dtool :pencil) "selected")
+        [:div.button {:class (when (= (mf/ref-val dtool) :pencil) "selected")
                       :on-click #(select-drawtool :pencil)}
          [:& i/lapiz]]
-        [:div.button {:class (when (= @dtool :erraser) "selected")
+        [:div.button {:class (when (= (mf/ref-val dtool) :erraser) "selected")
                       :on-click #(select-drawtool :erraser)}
          [:& i/goma]]]]
       [:div.main-panel
        [:div.draw-panel
-        [:canvas {:ref canvas}]
-        [:div.top-overlay {:style {:height "50px"}}]
-        [:div.bottom-overlay {:style {:height "50px"}}]]]
+        [:canvas {:ref (fn [node]
+                         (when node
+                           (js/console.log "changed canvas node" (hash node))
+                           (mf/set-ref-val! canvas node)))}]
+        [:div.top-overlay {:style {:height (str @crop-h "px")}}]
+        [:div.bottom-overlay {:style {:height (str @crop-h "px")}}]]]
       [:div.right-sidebar
        [:div.participants
         (for [player players]

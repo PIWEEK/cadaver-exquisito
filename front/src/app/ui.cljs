@@ -42,7 +42,7 @@
        [:& start-screen {:room room}]
 
        :else
-       (let [game (:game state)]
+       (when-let [game (:game state)]
          (cond
            (= "wait" screen)
            [:& wait-screen {:game game}]
