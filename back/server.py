@@ -357,6 +357,7 @@ def collectCanvas(message):
 
             emit('collectCanvas', response, to=room)
 
+
 @socketio.event
 def endGame(message):
 
@@ -410,7 +411,14 @@ def sendCanvas(message):
             emit('sendCanvas', response)
 
 
+@socketio.event
+def sendEmergencyCanvas(message):
 
+    message["dataURI"] = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACAAAAAABCAYAAABKFE7yAAAAIUlEQVR42u3BAQ0AAAwCIN8/tOb4BlzaBgAAAAAAAAB4bd+ZAv9635XAAAAAAElFTkSuQmCC"
+    message["canvasWidth"] = 2048
+    message["canvasHeight"] = 1
+
+    sendCanvas(message)
 
 
 @socketio.event
@@ -446,11 +454,12 @@ def nextTurn(message):
 
 
 @socketio.event
-def leaveGame(message):
+def leaveGame(message, unexpected=False):
 
     response = {}
     room = session["room"]
     playerID = session["playerID"]
+    unexpected = unexpected
 
     session['receive_count'] = session.get('receive_count', 0) + 1
     response.update({'count': session['receive_count']})
@@ -463,7 +472,10 @@ def leaveGame(message):
         game.leaveGame(playerID)
 
         if game.status == "ongoing":
-            sendCanvas(message) #before we actually leave, we send whatever canvas we have
+            if (unexpected==False):
+                sendCanvas(message) #before we actually leave, we send whatever canvas we have
+            else:
+                sendEmergencyCanvas(message)
             game.reassignCanvasonPlayerLeave(playerID)
 
     leave_room(room) # socket room
@@ -570,8 +582,14 @@ def connect(message):
 
 
 @socketio.on('disconnect')
-def test_disconnect():
+def player_disconnect():
+    playerID = session["playerID"]
+    print("disconnecting",playerID)
+    message = {}
+    message["playerID"] = playerID
     print('Client disconnected')
+    leaveGame(message, True)
+    
 
 
 if __name__ == '__main__':
