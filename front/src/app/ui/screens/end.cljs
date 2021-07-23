@@ -12,6 +12,7 @@
    [app.ui.avatars :refer [avatar]]
    [app.ui.common :as cm]
    [app.ui.context :as ctx]
+   [app.util.object :as obj]
    [app.util.webapi :as wa]
    [app.util.websockets :as ws]
    [promesa.core :as p]
@@ -19,26 +20,24 @@
    [goog.events :as gev]
    [rumext.alpha :as mf]))
 
-
-(defn create-image
+(defn- create-image
   [item]
   (p/create
    (fn [resolve]
      (let [width  (get item "width")
            height (get item "height")
            src    (get item "dataURI")
-           img    (js/Image.)]
-       ;; (js/console.log (pr-str item))
 
-       (set! (.-src img) src)
-       (set! (.-width img) width)
-       (set! (.-height img) height)
-       (gev/listenOnce img "load" #(resolve {:image img
-                                             :width width
-                                             :height height}))))))
+           img    (-> (js/Image.)
+                      (obj/set! "src" src)
+                      (obj/set! "width" width)
+                      (obj/set! "height" height))]
 
-
-(defn render-images
+       (gev/listenOnce img "load"
+                       #(resolve {:image img
+                                  :width width
+                                  :height height}))))))
+(defn- render-images!
   [ctx images]
   (loop [y      0
          images images]
@@ -47,53 +46,66 @@
       (recur (+ y height)
              (rest images)))))
 
-(mf/defc drawing-item
-  [{:keys [game group]}]
-  (let [duri (mf/use-state nil)]
-    (mf/use-effect
-     (fn []
-       (let [elements (map #(get-in game ["canvas" %]) group)
-             height   (reduce + 0 (map #(get % "height") elements))
-             width    (-> elements first (get "width"))
-             node     (.createElement js/document "canvas")
-             ctx      (.getContext ^js node "2d")]
-         ;; (cljs.pprint/pprint elements)
-
-         (set! (.-width node) width)
-         (set! (.-height node) height)
-         (-> (p/all (map create-image elements))
-             (p/then (partial render-images ctx))
-             (p/then (fn []
-                       (reset! duri (.toDataURL node "image/png"))))))))
-
-    [:div.drawing-item
-     [:div.drawing-container
-      (when @duri
-        [:img {:src @duri}])]]))
-
-
 (mf/defc end-screen
   {::mf/wrap [mf/memo]}
-  [{:keys [game params]}]
+  [{:keys [game index]}]
   (let [session-id (mf/use-ctx ctx/session-id)
         wsock      (mf/use-ctx ctx/wsocket)
 
         drawings   (get game "drawings")
-        index      (get params :image 0)
-        group      (get drawings index)]
+        index      (js/parseInt (or index 0))
+        group      (get drawings index)
+
+        data-uri   (mf/use-state nil)
+
+        on-download
+        (fn [event]
+          (when-let [data-uri (deref data-uri)]
+            (wa/trigger-download! {:name (str "drawing-" (inc index) ".png")
+                                   :href data-uri})))
+
+        on-next
+        (fn [event]
+          (when (< index (dec (count drawings)))
+            (prn "next-index" (inc index))
+            (swap! st/state assoc-in [:params :index] (inc index))))
+
+        on-prev
+        (fn [event]
+          (when (pos? index)
+            (swap! st/state assoc-in [:params :index] (dec index))))]
+
+    (mf/use-effect
+     (mf/deps group)
+     (fn []
+       (let [elements (map #(get-in game ["canvas" %]) group)
+             height   (reduce + 0 (map #(get % "height") elements))
+             width    (-> elements first (get "width"))
+
+             node     (wa/create-element "canvas" {:width width :height height})
+             ctx      (wa/get-context node "2d")]
+
+         (-> (p/all  (map create-image elements))
+             (p/then (fn [images]
+                       (render-images! ctx images)
+                       (reset! data-uri (.toDataURL node "image/png"))))))))
 
     [:*
      [:div.header]
      [:div.main-content
       [:& cm/left-sidebar]
       [:div.main-panel
-       [:& drawing-item {:game game :group group}]]
+       [:div.drawing
+        [:div.drawing-container
+         (when @data-uri
+           [:img {:src @data-uri}])]]]
+
       [:div.right-sidebar
        [:div.spacer]
        [:div.navigation
-        [:div [:& i/left]]
-        [:div [:& i/right]]]
-       [:div.download
+        [:div {:on-click on-prev} [:& i/left]]
+        [:div {:on-click on-next} [:& i/right]]]
+       [:div.download {:on-click on-download}
         [:div [:& i/download]]]]]
      [:div.footer]
      ]))
