@@ -23,7 +23,7 @@ def generateDrawings(numPlayers):
 
 def generateAvatars(multiples=5):
     shape = ["S"+str(i) for i in range(13)]
-    color = ["c"+str(i) for i in range(10)]
+    color = ["c"+str(i) for i in range(9)]
     animation = ["A"+str(i) for i in range(7)]
 
 
@@ -236,6 +236,16 @@ class CadaverGame:
         # return json.dumps(self, default=lambda o: o.__dict__,
         #     sort_keys=True, indent=4)
 
+    def toExcerptJSON(self):
+        j = self.toJSON()
+        try:
+            for canvasId in j["canvas"].keys():
+                j["canvas"][canvasId]["dataURI"] = j["canvas"][canvasId]["dataURI"][:50]
+
+        except:
+            pass
+        return j
+
     def saveToServer(self):
         with open(self.room, 'w') as f:
             f.write(json.dumps(self.toJSON()))
@@ -398,18 +408,20 @@ def sendCanvas(message):
         if game.allCanvasAreIn() and not game.isLastCanvasTurn: #final canvas on a non final turn
             response.update({'info': 'Yours was the last canvas!'})
             print('Yours was the last canvas!')
+            pp.pprint(game.toExcerptJSON())
             game.nextTurn()
             nextTurn(message)
         elif game.allCanvasAreIn() and game.isLastCanvasTurn: #final canvas on a final turn
             response.update({'info': 'Yours was the last canvas of the last turn!'})
             print('Yours was the last canvas of the last turn!')
+            pp.pprint(game.toExcerptJSON())
             game.endGame()
             endGame(message)
         else: #any non final canvas on any turn
             response.update({'info': 'Your canvas has been sent! Still waiting for the rest of players'})
             print('Your canvas has been sent! Still waiting for the rest of players')
             emit('sendCanvas', response)
-        pp.pprint(game.toJSON())
+        
 
 
 @socketio.event
@@ -447,7 +459,7 @@ def nextTurn(message):
 
         response.update({'data': game.toJSON()})
 
-        pp.pprint(game.toJSON())
+        pp.pprint(game.toExcerptJSON())
     
     emit('payload', response, to=room)
 
@@ -519,7 +531,7 @@ def payload_request(message):
         response.update({'data': game.toJSON()})
         response.update({'info':'Payload for room '+room})
 
-    pp.pprint(game.toJSON())
+    pp.pprint(game.toExcerptJSON())
     
     emit('payload', response)
 
