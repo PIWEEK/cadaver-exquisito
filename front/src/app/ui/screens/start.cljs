@@ -35,10 +35,10 @@
      (if (true? @waiting)
        [:div.notice "joining game...."]
        [:*
-        [:div.title "Welcome to cadaver exquisito!"]
+        [:div.title "Welcome to exquis!"]
         [:div.form
          [:input {:type "text"
-                  :placeholder "Enter your name..."
+                  :placeholder "What’s your name?"
                   :value @pname
                   :on-change #(let [val (-> (wa/get-target %)
                                             (wa/get-value))]
