@@ -68,8 +68,8 @@
         [:div.avatar [:& avatar {:profile profile}]]
         [:div.greetings (str "Hi " (get profile "name") "!")]
         (if is-admin?
-          [:div.message "Since you're the main blob, you get to start the game when everyone arrives."]
-          [:div.message (str (get admin "name") " will start the game once evryone arrives, so let’s wait for a bit")])
+          [:div.message "Since you're the main blob, you get to start the game when everyone arrives. Enjoy!"]
+          [:div.message (str (get admin "name") " will start the game once everyone arrives, stand by!")])
         (when is-admin?
           [:div.button.button-green {:on-click on-submit} "Start game"])]
 
