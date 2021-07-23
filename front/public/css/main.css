@@ -280,6 +280,7 @@ body {
 
 .screen-start > div:not(:last-child) {
   margin-bottom: 5vh;
+  text-align: center;
 }
 
 /* --- ROOM SCREEN --- */
