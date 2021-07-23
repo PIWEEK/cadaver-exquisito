@@ -127,8 +127,8 @@ body {
 }
 
 .player-avatar .ball {
-  width: 0.8vh;
-  height: 0.8vh;
+  width: 0.7vh;
+  height: 0.7vh;
   background: var(--color-black);
   position: absolute;
   top: 50%;
