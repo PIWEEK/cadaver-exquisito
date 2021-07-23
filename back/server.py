@@ -383,7 +383,7 @@ def sendCanvas(message):
     dataURI = message['dataURI']
     canvasWidth = message['canvasWidth']
     canvasHeight = message['canvasHeight']
-    print(message)
+    #print(message)
 
     session['receive_count'] = session.get('receive_count', 0) + 1
     response = {}
@@ -409,6 +409,7 @@ def sendCanvas(message):
             response.update({'info': 'Your canvas has been sent! Still waiting for the rest of players'})
             print('Your canvas has been sent! Still waiting for the rest of players')
             emit('sendCanvas', response)
+        pp.pprint(game.toJSON())
 
 
 @socketio.event
@@ -591,7 +592,7 @@ def player_disconnect():
     message = {}
     message["playerID"] = playerID
     print('Client disconnected')
-    leaveGame(message, True)
+    #leaveGame(message, True)
     
 
 
