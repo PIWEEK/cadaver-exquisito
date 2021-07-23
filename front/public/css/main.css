@@ -310,6 +310,7 @@ body {
 }
 
 .screen-wait .profile .message {
+  font-size: 3vh;
   padding: 0px 30px;
   text-align: center;
   font-size: var(--font-size-main);
