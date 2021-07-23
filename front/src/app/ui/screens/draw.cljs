@@ -292,8 +292,8 @@
      (when (= @wait turn)
        [:div.notice-overlay
         (if last?
-          [:span.message "Finalizing the game..."]
-          [:span.message "Waiting next turn..."])])
+          [:span.message "We are generating your drawings, please, hold on for a sec!"]
+          [:span.message "We are waiting for everyone to finish their drawings..."])])
      [:div.header]
      [:div.main-content
       [:& cm/left-sidebar {}
