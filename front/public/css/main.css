@@ -453,7 +453,7 @@ body {
 .screen-end .drawing {
   width: 100%;
   display: flex;
-  background-color: rgba(255,255,255,0.9);
+  background-color: #000000;
   flex-direction: column;
   /* border-radius: 0.5vw; */
 }
