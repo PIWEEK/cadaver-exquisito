@@ -99,7 +99,7 @@
               (= :erraser draw-tool)
               (->
                (assoc :color "white")
-               (assoc :line-width 30)))))
+               (assoc :line-width 18)))))
 
         on-mouse-move
         (fn [event]
