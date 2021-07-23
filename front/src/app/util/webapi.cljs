@@ -27,6 +27,19 @@
   [id]
   (dom/getElement id))
 
+(defn create-element
+  ([n] (create-element name {}))
+  ([n attrs]
+   (let [element (.createElement js/document n)]
+     (doseq [[k v] attrs]
+       (let [k (if (keyword? k) (name k) k)]
+         (unchecked-set element k v)))
+     element)))
+
+(defn get-context
+  [node n]
+  (.getContext ^js node n))
+
 (defn stop-propagation!
   [e]
   (when e
@@ -53,14 +66,6 @@
   [node]
   (.-checked node))
 
-(defn set-value!
-  [node value]
-  (set! (.-value node) value))
-
-(defn query
-  [el query]
-  (.querySelector el query))
-
 (defn focus!
   [node]
   (.focus ^js node))
@@ -85,3 +90,12 @@
 
 (defn release-pointer [event]
   (-> event get-target (.releasePointerCapture (.-pointerId event))))
+
+(defn trigger-download!
+  [{:keys [name href]}]
+  (let [attrs {:download name  :href href}
+        link  (create-element "a" attrs)
+        body  (unchecked-get js/document "body")]
+    (.appendChild ^js body link)
+    (.click ^js link)
+    (.removeChild ^js body link)))

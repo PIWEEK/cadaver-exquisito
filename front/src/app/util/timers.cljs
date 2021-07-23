@@ -6,45 +6,27 @@
 
 (ns app.util.timers
   (:require
-   [beicon.core :as rx]
-   [promesa.core :as p]))
+   [app.util.exceptions :as ex]))
+
 
 (defn schedule
   ([func]
    (schedule 0 func))
   ([ms func]
    (let [sem (js/setTimeout #(func) ms)]
-     (reify rx/IDisposable
-       (-dispose [_]
-         (js/clearTimeout sem))))))
-
-(defn dispose!
-  [v]
-  (rx/dispose! v))
-
-(defn asap
-  [f]
-  (-> (p/resolved nil)
-      (p/then f)))
+     (fn []
+       (js/clearTimeout sem)))))
 
 (defn interval
-  [ms func]
-  (let [sem (js/setInterval #(func) ms)]
-    (reify rx/IDisposable
-      (-dispose [_]
-        (js/clearInterval sem)))))
-
-(if (and (exists? js/window) (.-requestIdleCallback js/window))
-  (do
-    (def ^:private request-idle-callback #(js/requestIdleCallback %))
-    (def ^:private cancel-idle-callback #(js/cancelIdleCallback %)))
-  (do
-    (def ^:private request-idle-callback #(js/setTimeout % 100))
-    (def ^:private cancel-idle-callback #(js/clearTimeout %))))
-
-(defn schedule-on-idle
-  [func]
-  (let [sem (request-idle-callback #(func))]
-    (reify rx/IDisposable
-      (-dispose [_]
-        (cancel-idle-callback sem)))))
+  ([f] (interval 1000 f))
+  ([ms f]
+   (let [counter (volatile! 1)
+         semp    (volatile! nil)]
+     (vreset! semp (js/setInterval (fn []
+                                     (let [res (ex/ignoring (f @counter))]
+                                       (vswap! counter inc)
+                                       (when (= res ::stop)
+                                         (js/clearInterval @semp))))
+                                   ms))
+     (fn []
+       (js/clearInterval @semp)))))
