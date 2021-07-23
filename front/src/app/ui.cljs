@@ -57,54 +57,35 @@
            :else
            [:span "not found"])))]))
 
-(declare initialize-websocket)
+(defn- initialize-websocket
+  [{:keys [socket] :as wsocket}]
+  (letfn [(on-payload [{:keys [data]}]
+            (let [game (get data "data")]
+              (swap! st/state st/update-game game)))]
+    (ws/watch! socket "payload" on-payload)))
+
 
 (mf/defc app
   [props]
   (let [state       (mf/deref st/state)
         orientation (rh/use-orientation)
         session-id  (mf/use-memo get-session-id)
-        wsocket     (rh/use-socket session-id)
-        msgbus      (mf/use-memo #(a/chan 1))]
+        wsocket     (rh/use-socket session-id)]
 
     (mf/use-effect
      (mf/deps wsocket)
-     (partial initialize-websocket wsocket msgbus))
+     (partial initialize-websocket wsocket))
 
     [:& (mf/provider ctx/wsocket) {:value wsocket}
-     [:& (mf/provider ctx/msgbus) {:value msgbus}
-      [:& (mf/provider ctx/session-id) {:value session-id}
-       [:main.layout
-        (cond
-          (= :portrait orientation)
-          [:div.notice "Please put your smartphone in horizontal position."]
+     [:& (mf/provider ctx/session-id) {:value session-id}
+      [:main.layout
+       (cond
+         (= :portrait orientation)
+         [:div.notice "Please put your smartphone in horizontal position."]
 
-          (false? (:connected wsocket))
-          [:div.notice "Connecting..."]
+         (false? (:connected wsocket))
+         [:div.notice "Connecting..."]
 
-          :else
-          [:& game {:state state}])]]]]))
+         :else
+         [:& game {:state state}])]]]))
 
-(defn initialize-websocket
-  [{:keys [socket] :as wsocket}]
-  (let [on-payload
-        (fn [{:keys [data]}]
-          (let [game   (get data "data")
-                origin (get data "origin")]
-            ;; (cljs.pprint/pprint data)
-            (swap! st/state st/update-game game origin)))
-
-        on-end-turn
-        (fn [{:keys [data] :as event}]
-          (prn "on-end-turn" event))
-
-        on-connect
-        (fn [params]
-          (prn "on-connect" params))]
-
-    (-> socket
-        (ws/watch! "payload" on-payload)
-        (ws/watch! "endTurn" on-end-turn)
-        #_(ws/watch! "connect" on-connect))
-
-    (constantly nil)))

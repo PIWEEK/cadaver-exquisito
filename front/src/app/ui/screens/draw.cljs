@@ -211,8 +211,6 @@
   [{:keys [game]}]
   (let [session-id (mf/use-ctx ctx/session-id)
         wsock      (mf/use-ctx ctx/wsocket)
-        msgbus     (mf/use-ctx ctx/msgbus)
-
         canvas     (mf/use-ref)
 
         turn       (get game "activeCanvasTurn")
