@@ -157,7 +157,7 @@ class CadaverGame:
                 index = (turn*(size+1)+size*p)%len(canvas_list)
                 c = canvas_list[index]
                 if turn==0:
-                    prev_c = {}
+                    prev_c = ''
                 else:
                     index = (turn*(size+1)+size*p)%len(canvas_list)-1
                     prev_c = canvas_list[index]
@@ -191,17 +191,20 @@ class CadaverGame:
         return (len(self.waitTurnForPlayers) == 0)
 
     def nextTurn(self):
-
+        print("NEXT TURN")
         if not self.isLastCanvasTurn:
             self.activeCanvasTurn +=1
+            print("we are at turn",self.activeCanvasTurn)
             if len(self.players) == self.activeCanvasTurn + 1:
                 self.isLastCanvasTurn = True
         self.waitTurnForPlayers = [p["playerId"] for p in self.players]
 
 
     def endGame(self):
-
+        print("END GAME")
         self.status = "finished"
+        pp.pprint(self.toExcerptJSON())
+
 
 
     def buildAvatars(self):
@@ -399,7 +402,7 @@ def sendCanvas(message):
 
     with app.app_context():
         game = app.cadaverGames[room]
-        canvasId = game.canvasTurns[playerID][game.activeCanvasTurn][0]
+        canvasId = game.canvasTurns[playerID][game.activeCanvasTurn][0] #DANGER
         game.receiveTurnFromPlayer(playerID, canvasId, dataURI, canvasWidth, canvasHeight)
 
         if game.allCanvasAreIn() and not game.isLastCanvasTurn: #final canvas on a non final turn
@@ -446,7 +449,7 @@ def nextTurn(message):
 
         #TODO check for existing room, raise error otherwise
         game = app.cadaverGames[room]
-        if game.hasPlayer(playerID) and game.isAdmin(playerID and not game.isLastCanvasTurn):
+        if game.hasPlayer(playerID) and game.isAdmin(playerID) and not game.isLastCanvasTurn:
 
             game.nextTurn()
             print("It's time for a new turn!")
