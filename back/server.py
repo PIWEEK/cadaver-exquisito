@@ -1,4 +1,4 @@
-import json, uuid, pprint
+import json, uuid, pprint, copy
 from datauri import DataURI
 from random import randint, choice, shuffle
 from threading import Lock
@@ -237,15 +237,14 @@ class CadaverGame:
         #     sort_keys=True, indent=4)
 
     def toExcerptJSON(self):
-        return self.toJSON()
-        # j = self.toJSON()
-        # try:
-        #     for canvasId in j["canvas"].keys():
-        #         j["canvas"][canvasId]["dataURI"] = j["canvas"][canvasId]["dataURI"][:50]
+        j = copy.deepcopy(self.toJSON())
+        try:
+            for canvasId in j["canvas"].keys():
+                j["canvas"][canvasId]["dataURI"] = j["canvas"][canvasId]["dataURI"][:50]
 
-        # except:
-        #     pass
-        # return j
+        except:
+            pass
+        return j
 
     def saveToServer(self):
         with open(self.room, 'w') as f:
