@@ -157,7 +157,7 @@ class CadaverGame:
                 index = (turn*(size+1)+size*p)%len(canvas_list)
                 c = canvas_list[index]
                 if turn==0:
-                    prev_c = None
+                    prev_c = {}
                 else:
                     index = (turn*(size+1)+size*p)%len(canvas_list)-1
                     prev_c = canvas_list[index]
@@ -172,7 +172,7 @@ class CadaverGame:
 
         turnsdict = {}
         self.drawings = generateDrawings(len(self.players))
-        self.canvas = {uid:None for sublist in self.drawings for uid in sublist}
+        self.canvas = {uid:{"dataURI": "", "width": 0, "height": 0} for sublist in self.drawings for uid in sublist}
         self.waitTurnForPlayers = [p["playerId"] for p in self.players]
         if len(self.waitTurnForPlayers) == 1:
             self.isLastCanvasTurn = True
@@ -238,12 +238,9 @@ class CadaverGame:
 
     def toExcerptJSON(self):
         j = copy.deepcopy(self.toJSON())
-        try:
-            for canvasId in j["canvas"].keys():
-                j["canvas"][canvasId]["dataURI"] = j["canvas"][canvasId]["dataURI"][:50]
+        for canvasId in j["canvas"].keys():
+            j["canvas"][canvasId]["dataURI"] = j["canvas"][canvasId]["dataURI"][50:500]
 
-        except:
-            pass
         return j
 
     def saveToServer(self):
