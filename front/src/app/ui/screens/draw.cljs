@@ -62,6 +62,7 @@
                       (obj/set! "src" duri)
                       (obj/set! "width" img-w)
                       (obj/set! "height" img-h))]
+
       (gev/listenOnce image "load"
                       #(.drawImage ctx image sx sy swidth sheight 0 0 img-w crop-h)))))
 
@@ -216,6 +217,7 @@
         turn       (get game "activeCanvasTurn")
         last?      (get game "isLastCanvasTurn")
         players    (get game "players")
+        canvas-id  (get-in game ["canvasTurns" session-id (str turn) 0])
 
         player     (d/seek #(= session-id (get % "playerId")) players)
 
@@ -234,13 +236,15 @@
 
         finish-turn
         (mf/use-callback
-         (mf/deps turn wsock)
+         (mf/deps turn wsock canvas-id)
          (fn [event]
            (let [node    (mf/ref-val canvas)
                  imgd    (extract-image-data node turn)
+
                  socket  (:socket wsock)
                  params  {:room (get game "room")
                           :dataURI (:data-uri imgd)
+                          :canvasID canvas-id
                           :canvasWidth (:width imgd)
                           :canvasHeight (:height imgd)}]
 
@@ -255,8 +259,7 @@
     (mf/use-layout-effect
      (mf/deps turn)
      (fn []
-       (let [turn     (str (get game "activeCanvasTurn"))
-             prev-idx (get-in game ["canvasTurns" session-id turn 1])
+       (let [prev-idx (get-in game ["canvasTurns" session-id (str turn) 1])
              prev     (get-in game ["canvas" prev-idx])
              node     (mf/ref-val canvas)]
          (clean-drawing! node)
