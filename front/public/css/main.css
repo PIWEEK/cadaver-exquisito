@@ -315,7 +315,6 @@ body {
   font-size: 3vh;
   padding: 0px 30px;
   text-align: center;
-  font-size: var(--font-size-main);
 }
 
 .screen-wait .share-link .circle-button > .label {
