@@ -117,7 +117,7 @@ body {
 }
 .player-avatar .eye {
   width: 14%;
-  height: 12%;
+  height: 13%;
   background: #fff;
   display: inline-block;
   margin: 3%;
@@ -127,8 +127,8 @@ body {
 }
 
 .player-avatar .ball {
-  width: 0.7vh;
-  height: 0.7vh;
+  width: 0.8vh;
+  height: 0.8vh;
   background: var(--color-black);
   position: absolute;
   top: 50%;
@@ -233,7 +233,8 @@ body {
   /* outline: 1px solid red; */
   display: flex;
   justify-content: center;
-  padding: 1vh 0vh;
+  padding: 0 0vh 2vh 0;
+  font-size: 2vh;
 }
 
 
