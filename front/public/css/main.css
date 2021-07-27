@@ -294,7 +294,8 @@ body {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  width: 94vw;
+  width: 88vw;
+  margin-right: 6vw;
 }
 
 .screen-wait .profile {
