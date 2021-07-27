@@ -38,7 +38,7 @@ body {
   display: flex;
   justify-content: center;
   font-size: var(--font-size-main);
-  padding: 2vh 4vh;
+  padding: 2vh 6vh 3vh 6vh;
   border-radius: 6vh;
 }
 
