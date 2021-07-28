@@ -314,7 +314,7 @@ body {
 
 .screen-wait .profile .message {
   font-size: var(--font-size-small);
-  padding: 0px 30px;
+  width: 60vh;
   text-align: center;
 }
 
