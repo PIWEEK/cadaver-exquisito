@@ -1,6 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" width="32" height="32"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<circle r="16" transform="matrix(-1 0 0 1 16 16)" fill="#FF715E"></circle>
-<path d="M8.24998 16.0001C8.24998 19.484 12.5161 20.8664 16 20.8664C19.4839 20.8664 23.75 19.484 23.75 16.0001C23.75 12.5162 19.4839 11.1338 16 11.1338C12.5161 11.1338 8.24998 12.5162 8.24998 16.0001Z" fill="white"></path>
-<circle r="3.04143" transform="matrix(-1 0 0 1 16 15.9999)" fill="black"></circle>
+<g clip-path="url(#clip0)">
+<path d="M16.125 2L32.125 28H0.125L16.125 2Z" fill="#FF6F6F"></path>
+<path d="M9.41665 19.1337C9.41665 22.0932 13.0406 23.2675 16 23.2675C18.9595 23.2675 22.5834 22.0932 22.5834 19.1337C22.5834 16.1743 18.9595 15 16 15C13.0406 15 9.41665 16.1743 9.41665 19.1337Z" fill="white"></path>
+<circle r="2.58359" transform="matrix(-1 0 0 1 16 19.1339)" fill="black"></circle>
+</g>
+<defs>
+<clipPath id="SvgjsClipPath1000">
+<rect width="32" height="32" fill="white"></rect>
+</clipPath>
+</defs>
 </svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
 </style></svg>
