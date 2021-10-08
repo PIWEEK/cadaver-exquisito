@@ -6,7 +6,8 @@
 
 (ns app.util.exceptions
   "A helpers for work with exceptions."
-  (:require [clojure.spec.alpha :as s]))
+  (:require [clojure.spec.alpha :as s])
+  #?(:cljs (:require-macros [app.util.exceptions])))
 
 (s/def ::type keyword?)
 (s/def ::code keyword?)

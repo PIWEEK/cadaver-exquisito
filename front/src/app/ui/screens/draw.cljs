@@ -7,17 +7,17 @@
 (ns app.ui.screens.draw
   (:require
    [app.store :as st]
-   [app.util.data :as d]
-   [app.ui.icons :as i]
    [app.ui.avatars :refer [avatar]]
-   [app.ui.context :as ctx]
    [app.ui.common :as cm]
-   [app.util.timers :as ts]
+   [app.ui.context :as ctx]
+   [app.ui.icons :as i]
+   [app.util.data :as d]
    [app.util.object :as obj]
+   [app.util.timers :as ts]
    [app.util.webapi :as wa]
    [app.util.websockets :as ws]
-   [potok.core :as ptk]
    [goog.events :as gev]
+   [potok.core :as ptk]
    [rumext.alpha :as mf]))
 
 (def ^:const default-canvas-width 2048)
@@ -265,7 +265,6 @@
          (clean-drawing! node)
          (draw-previous-drawing! node prev)
          (constantly nil))))
-
 
     (mf/use-effect
      (mf/deps game)

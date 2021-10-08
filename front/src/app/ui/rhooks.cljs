@@ -19,13 +19,19 @@
   (let [orientation (mf/use-state (wa/get-orientation))]
     (mf/use-effect
      (fn []
-       (let [key (events/listen js/screen.orientation "change"
-                                (fn [event]
-                                  (ts/schedule 200 #(reset! orientation (wa/get-orientation)))))]
-         (fn []
-           (events/unlistenByKey key)))))
-
-        @orientation))
+       ;; If we have window.screen.orientation, use the most efficient
+       ;; way to detect the screen orientation change; but if we dont
+       ;; have it, proceed to use the old technique of polling.
+       (if (and (exists? js/screen)
+           (exists? (.-orientation js/screen)))
+         (let [key (events/listen js/screen.orientation "change"
+                                  (fn [event]
+                                    (ts/schedule 200 #(reset! orientation (wa/get-orientation)))))]
+           (fn [] (events/unlistenByKey key)))
+         (letfn [(on-poll []
+                   (reset! orientation (wa/get-orientation)))]
+           (ts/interval 1000 on-poll)))))
+    @orientation))
 
 (defn use-socket
   [session-id]

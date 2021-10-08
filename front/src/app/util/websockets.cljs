@@ -27,7 +27,6 @@
 
 (defn send!
   [socket event data]
-  (prn "ws/send!" event (clj->js data))
   (.emit ^js socket event (clj->js data)))
 
 (defn watch!
