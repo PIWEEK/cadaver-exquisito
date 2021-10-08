@@ -1,7 +1,7 @@
 :8081 {
 	reverse_proxy /socket.io/* 127.0.0.1:5000
 	reverse_proxy /* 127.0.0.1:8888
-    request_body {
-       max_size 1GB
-    }
+	request_body {
+		max_size 1GB
+	}
 }
