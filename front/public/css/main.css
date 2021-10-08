@@ -15,6 +15,7 @@
 
   --font-size-main: 4vh;
   --font-size-small: 3vh;
+  --main-color: #8AAE7E;
 }
 
 main > * {
@@ -46,8 +47,8 @@ body {
   background-color: #BAA0EC;
 }
 
-.button.button-green {
-  background-color: #8AAE7E;
+.button.button-start {
+  background-color: var(--main-color);
 }
 
 /* --- SECTION: [...] --- */
@@ -90,6 +91,35 @@ body {
   justify-content: center;
   align-items: center;
 }
+
+.layout .help-overlay {
+  z-index: 900;
+  color: var(--main-color);
+  font-size: var(--font-size-small);
+  display: flex;
+  width: 82vw;
+  margin-left: 6vw;
+  text-align: center;
+  position: fixed;
+  height: 93vh;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.layout .help-overlay.bottom {
+  justify-content: flex-end;
+}
+
+.layout .help-overlay .content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  /* border: 1px solid red; */
+  height: 15vh;
+}
+
 
 .player-avatar {
   /* outline: 1px solid white; */
@@ -193,8 +223,8 @@ body {
 }
 
 .screen .left-sidebar .draw-buttons .button.selected {
-  background: #FFA841;
-  border: 1px solid #FFA841;
+  background: var(--main-color);
+  border: 1px solid var(--main-color);
   border-radius: 3vw;
 }
 
@@ -501,7 +531,7 @@ body {
   margin-top: 2vh;
   height: 10vh;
   width: 10vh;
-  background: #F37D58;
+  background: var(--main-color);
   border-radius: 10vh;
   justify-content: center;
   align-items: center;
@@ -520,9 +550,18 @@ body {
 }
 
 .footer .progress-bar .position {
-  background: #F37D58;
+  background: var(--main-color);
   width: 0vw;
   height: 100%;
+  transition: width 1s linear;
 }
 
+@keyframes fadeOut {
+  0% {opacity: 1;}
+  100% {opacity: 0;}
+}
 
+.help-hide {
+  opacity: 0;
+  animation: fadeOut ease 2s;
+}

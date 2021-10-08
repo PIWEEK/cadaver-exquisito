@@ -7,7 +7,7 @@
 (ns app.ui.screens.draw
   (:require
    [app.store :as st]
-   [app.ui.avatars :refer [avatar]]
+   [app.ui.avatars :refer [avatar get-player-color]]
    [app.ui.common :as cm]
    [app.ui.context :as ctx]
    [app.ui.icons :as i]
@@ -214,6 +214,8 @@
         wsock      (mf/use-ctx ctx/wsocket)
         canvas     (mf/use-ref)
 
+        help       (mf/use-ref)
+
         turn       (get game "activeCanvasTurn")
         last?      (get game "isLastCanvasTurn")
         players    (get game "players")
@@ -253,6 +255,24 @@
         ]
 
     (mf/use-layout-effect
+     (mf/deps player)
+     (fn []
+       (when player
+         (let [root  (.-documentElement ^js js/document)
+               style (.-style ^js root)
+               color (get-player-color player)]
+           (.setProperty ^js style "--main-color" color)))))
+
+
+    (mf/use-layout-effect
+     (mf/deps turn)
+     (fn []
+       (ts/schedule 10000 (fn []
+                            (when-let [node (mf/ref-val help)]
+                              (.add (.-classList ^js node) "help-hide"))))))
+
+
+    (mf/use-layout-effect
      #(let [node (mf/ref-val canvas)]
         (initialize! node dtool)))
 
@@ -283,7 +303,6 @@
                    (cond
                      (= n default-turn-seconds)
                      (reset! wait turn)
-
                      (> n default-turn-seconds)
                      (do
                        (finish-turn)
@@ -294,10 +313,23 @@
      (when (= @wait turn)
        [:div.notice-overlay
         (if last?
-          [:span.message "We are generating your drawings, please, hold on for a sec!"]
-          [:span.message "We are waiting for everyone to finish their drawings..."])])
+          [:span.message "Finalizing the game..."]
+          [:span.message "Waiting next turn..."])])
+
      [:div.header]
      [:div.main-content
+      (cond
+        last?
+        [:div.help-overlay.bottom {:ref help}
+         [:div.content
+          "This is the last drawing. Let it breath at the bottom."]]
+
+        (= 0 turn)
+        [:div.help-overlay {:ref help}
+         [:div.content
+          [:span "Time to start your drawing!"]
+          [:span "Make sure you go all the way til the bottom edges."]]])
+
       [:& cm/left-sidebar {}
        [:div.draw-buttons
         [:div.button.finish-turn
@@ -312,8 +344,10 @@
       [:div.main-panel
        [:div.draw-panel
         [:canvas {:ref canvas}]
-        [:div.top-overlay {:style {:height (str @crop-h "px")}}]
-        [:div.bottom-overlay {:style {:height (str @crop-h "px")}}]]]
+        (when (pos? turn)
+          [:div.top-overlay {:style {:height (str @crop-h "px")}}])
+        (when-not last?
+          [:div.bottom-overlay {:style {:height (str @crop-h "px")}}])]]
       [:div.right-sidebar
        [:div.participants
         (for [player players]

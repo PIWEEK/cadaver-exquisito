@@ -421,3 +421,9 @@
     from {transform:rotate(0deg);}
     to {transform:rotate(10deg);}
 }*/
+
+
+@keyframes fadeOut {
+  0% {opacity: 1;}
+  100% {opacity: 0;}
+}

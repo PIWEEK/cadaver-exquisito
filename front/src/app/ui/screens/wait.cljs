@@ -9,7 +9,7 @@
    [app.store :as st]
    [app.ui.context :as ctx]
    [app.ui.icons :as i]
-   [app.ui.avatars :refer [avatar]]
+   [app.ui.avatars :refer [avatar get-player-color]]
    [app.ui.common :as cm]
    [app.util.data :as d]
    [app.util.webapi :as wa]
@@ -36,12 +36,12 @@
         players    (get game "players")
         room       (get game "room")
 
-        profile    (d/seek #(= session-id (get % "playerId")) players)
+        player    (d/seek #(= session-id (get % "playerId")) players)
         admin      (d/seek #(get % "isAdmin") players)
 
-        fullname   (get profile "name")
-        is-admin?  (get profile "isAdmin")
-        avatar-id  (get profile "avatar")
+        fullname   (get player "name")
+        is-admin?  (get player "isAdmin")
+        avatar-id  (get player "avatar")
 
         on-submit
         (fn []
@@ -57,6 +57,18 @@
           (when-let [clipboard (unchecked-get js/navigator "clipboard")]
             (.writeText ^js clipboard slink)))]
 
+
+    (mf/use-layout-effect
+     (mf/deps player)
+     (fn []
+       (when player
+         (let [root  (.-documentElement ^js js/document)
+               style (.-style ^js root)
+               color (get-player-color player)]
+           (.setProperty ^js style "--main-color" color)))))
+
+
+
     [:*
      (when (true? @waiting)
       [:div.notice-overlay "joining game...."])
@@ -65,13 +77,13 @@
       [:& cm/left-sidebar {}]
       [:div.main-panel
        [:div.profile
-        [:div.avatar [:& avatar {:profile profile}]]
-        [:div.greetings (str "Hi " (get profile "name") "!")]
+        [:div.avatar [:& avatar {:profile player}]]
+        [:div.greetings (str "Hi " (get player "name") "!")]
         (if is-admin?
           [:div.message "Since you're the main blob, you get to start the game when everyone arrives. Enjoy!"]
           [:div.message (str (get admin "name") " will start the game once everyone arrives, stand by!")])
         (when is-admin?
-          [:div.button.button-green {:on-click on-submit} "Start game"])]
+          [:div.button.button-start {:on-click on-submit} "Start game"])]
 
        [:div.participants
         (for [player players]

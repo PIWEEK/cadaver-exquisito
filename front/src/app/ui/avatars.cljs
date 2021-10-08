@@ -83,7 +83,6 @@
     (set! (.-left s2) (str x "%"))
     (set! (.-top s2) (str y "%"))))
 
-
 (mf/defc eyes
   {::mf/wrap [mf/memo]}
   []
@@ -101,6 +100,11 @@
       [:div.ball {:ref ball-ref-1}]]
      [:div {:class "eye"}
       [:div.ball {:ref ball-ref-2}]]]))
+
+(defn get-player-color
+  [{:strs [avatar]}]
+  (let [[symbol color animation] avatar]
+    (get colors color)))
 
 (mf/defc avatar
   {::mf/wrap [mf/memo]}

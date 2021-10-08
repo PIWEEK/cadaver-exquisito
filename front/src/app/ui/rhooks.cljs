@@ -23,7 +23,7 @@
        ;; way to detect the screen orientation change; but if we dont
        ;; have it, proceed to use the old technique of polling.
        (if (and (exists? js/screen)
-           (exists? (.-orientation js/screen)))
+                (exists? (.-orientation js/screen)))
          (let [key (events/listen js/screen.orientation "change"
                                   (fn [event]
                                     (ts/schedule 200 #(reset! orientation (wa/get-orientation)))))]
