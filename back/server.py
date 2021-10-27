@@ -321,7 +321,7 @@ def joinGame(message):
 
         #print(game.toJSON())
 
-    print("payload", response)
+    #print("payload", response)
 
     emit('payload', response, to=room)
 
